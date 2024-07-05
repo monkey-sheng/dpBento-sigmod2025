@@ -1,3 +1,1 @@
-Files for DPU-Bench
-
-for mem_latency.cpp, compile with -O2 optimization
+This is DP-Bento, a customizable and modular benchmarking framework for DPU & SmartNICs
