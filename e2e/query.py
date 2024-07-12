@@ -3,7 +3,7 @@ import pandas as pd
 import time
 
 # Define scale factors and corresponding DuckDB file paths
-scale_factors = [1, 3, 10]
+scale_factors = [1, 3, 10 ]
 duckdb_file_paths = {
     1: 'sf1',
     3: 'sf3',

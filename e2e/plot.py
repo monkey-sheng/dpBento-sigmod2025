@@ -19,13 +19,13 @@ def plot_data(cpu_data, dpu_data, output_file='comparison_plot.png'):
     r2 = [x + bar_width for x in r1]
 
     # Plot the bars
-    plt.bar(r1, cpu_data['Run Time (s)'], color='b', width=bar_width, edgecolor='grey', label='CPU')
-    plt.bar(r2, dpu_data['Run Time (s)'], color='r', width=bar_width, edgecolor='grey', label='DPU')
+    plt.bar(r1, cpu_data['Run Time (s)'], color='b', width=bar_width, edgecolor='grey', label='BF2')
+    plt.bar(r2, dpu_data['Run Time (s)'], color='r', width=bar_width, edgecolor='grey', label='BF3')
 
     # Add labels
     plt.xlabel('Query', fontweight='bold')
     plt.ylabel('Run Time (s)', fontweight='bold')
-    plt.title('TPC-H Query Run Time Comparison: CPU vs DPU')
+    plt.title('TPC-H Query Run Time Comparison: BF2 vs BF3 on scale factor 10')
     plt.xticks([r + bar_width/2 for r in range(len(cpu_data))], cpu_data['Query'], rotation=45)
 
     # Add a legend
@@ -48,7 +48,7 @@ def main(cpu_file, dpu_file):
 # Entry point of the script
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python plot_comparison.py <cpu_file> <dpu_file>")
+        print("Usage: python plot_comparison.py <bf2_file> <bf3_file>")
         sys.exit(1)
     
     cpu_file = sys.argv[1]

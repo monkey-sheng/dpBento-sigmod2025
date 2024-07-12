@@ -31,7 +31,7 @@ def run_tpch_queries(conn, scale_factor):
         query_runtimes.append(run_time)
     return query_runtimes
 
-# Run benchmarks on host
+# Run benchmarks on bf3
 for sf in scale_factors:
     duckdb_file_path = duckdb_file_paths[sf]
     with duckdb.connect(database=duckdb_file_path, read_only=True) as conn:
@@ -131,4 +131,6 @@ def plot_results(host_file, dpu_file):
 
 # Plot results
 plot_results('host_results.csv', 'bf2_results.csv')
+
+# Duckdb uni test include scale factor 1, 3, 10, down
 
