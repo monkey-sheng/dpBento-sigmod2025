@@ -8,7 +8,7 @@ from enum import IntEnum
 import argparse as ap
 from dataclasses import dataclass
 
-from typing import List, Optional, Set, Generic, Type, TypeVar, FrozenSet
+from typing import Callable, List, Optional, Sequence, Set, Generic, Tuple, Type, TypeVar, FrozenSet
 
 
 class HWPlatform(IntEnum):
@@ -75,6 +75,11 @@ class BenchmarkParameters(Generic[T]):
         param_type (T): The type of the parameter, e.g. int, float, str, etc.
         help_str (str): The help message for this argument.
         default (Optional[T]): The default value for this argument.
+        
+        choices (Optional[Sequence]): The valid values this argument can take, will be passed directly to argparse.
+        
+        parse_func (Optional[Type[T]]): A function to parse and validate the input string to the actual type.
+        Should mostly be needed when choices and type conversion don't suffice.
     '''
 
     short_arg: Optional[str]
@@ -82,6 +87,8 @@ class BenchmarkParameters(Generic[T]):
     help_str: str
     default: T
     param_type: type = Type[T]
+    choices: Optional[Sequence] = None
+    parse_func: Optional[Callable[[str], T]] = None
 
     # def __init__(self, short_arg, long_arg, param_type, help_str, default) -> None:
     #     self.short_arg = short_arg
@@ -93,7 +100,13 @@ class BenchmarkParameters(Generic[T]):
     # def __hash__(self):
     #     return hash((self.short_arg, self.long_arg, self.default, self.help_str))
 
-
+@dataclass
+class BenchmarkParametersSet:
+    '''
+    A set of parameters/inputs for a test.
+    Consists of some number of BenchmarkParameters[Any].
+    Benchmark implementers should inherit from this class and provide the actual parameters.
+    '''
 
 class BenchmarkItem(ABC):
     """
@@ -106,12 +119,12 @@ class BenchmarkItem(ABC):
 
     output_structure: BenchmarkOutputStructure
     metadata: BenchmarkMetadata
-    params: FrozenSet[BenchmarkParameters]  # the parameters/input for this test
+    params: BenchmarkParametersSet  # the parameters/input for this test, would be a subtype of it
 
-    def __init__(self, params: FrozenSet[BenchmarkParameters[T]],
+    def __init__(self, params: BenchmarkParametersSet,
                  metadata: BenchmarkMetadata) -> None:
         '''
-        TODO: what happens here? nothing?
+        TODO: what happens here? nothing else?
         '''
         self.params = params
         self.metadata = metadata

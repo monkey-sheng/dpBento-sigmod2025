@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Optional, Set, FrozenSet
-from dpbento.benchmark_base import \
+from benchmark_base import \
 BenchmarkCategory, BenchmarkItem, BenchmarkMetadata, BenchmarkParameters, BenchmarkOutputStructure, HWPlatform
 
 # if bf2 and bf3 are super similar, then we can just piggyback off of bf2 with something like this
