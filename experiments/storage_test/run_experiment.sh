@@ -74,6 +74,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Ensure test_dir exists
+if [ ! -d "$test_dir" ]; then
+  mkdir -p "$test_dir"
+fi
+
 # Convert comma-separated strings to arrays
 IFS=',' read -r -a test_lst_array <<< "$test_lst"
 

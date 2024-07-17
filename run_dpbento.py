@@ -17,8 +17,21 @@ class ExperimentRunner:
             config = json.load(f)
         return config
 
+    def create_directories(self):
+        try:
+            os.makedirs(self.dpdento_root, exist_ok=True)
+        except PermissionError as e:
+            print(f"PermissionError: Cannot create directory '{self.dpdento_root}'. Check your permissions.")
+            raise e
+
+        try:
+            os.makedirs(self.output_folder, exist_ok=True)
+        except PermissionError as e:
+            print(f"PermissionError: Cannot create directory '{self.output_folder}'. Check your permissions.")
+            raise e
+
     def run(self):
-        os.makedirs(self.output_folder, exist_ok=True)
+        self.create_directories()
         
         # Generate all combinations of test parameters
         keys = self.test_parameters.keys()
@@ -38,7 +51,10 @@ class ExperimentRunner:
                 command.append(str(value))
             
             print(f"Running command: {' '.join(command)}")
-            subprocess.run(command, check=True)
+            try:
+                subprocess.run(command, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Command failed with error: {e}")
 
 def main():
     config_file = 'configs_user/customize_test.json'
