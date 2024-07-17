@@ -11,7 +11,7 @@ def plot_data(cpu_data, dpu_data, output_file='comparison_plot.png'):
     # Create a new figure
     plt.figure(figsize=(10, 6))
 
-    # Set the width of the bars
+    # Set the width of the bar
     bar_width = 0.35
 
     # Set positions of the bars on the x-axis
