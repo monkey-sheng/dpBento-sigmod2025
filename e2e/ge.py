@@ -15,6 +15,8 @@ for sf in scale_factors:
             
             print(f"Data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
     except duckdb.DuckDBError as e:
+
+
         if "Extension not found" in str(e):
             with duckdb.connect(database=duckdb_file_path, read_only=False) as conn:
                 conn.execute("INSTALL tpch")
@@ -22,4 +24,5 @@ for sf in scale_factors:
                 conn.execute(f"CALL dbgen(sf={sf})")
                 print(f"TPC-H extension installed and data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
         else:
+
             print(f"An error occurred: {e}")
