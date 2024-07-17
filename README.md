@@ -94,5 +94,14 @@ Enter the root directory path for the DPU benchmark in the `dpdento_root` field,
 
 ## How to Run the customize experiment by DPU-bench
 
+`cd DPU-bench`
+
+The `setup` script will install all dependencies and packages that we need
+
+`python setup.py`
+
+Assumption: User already configure the `/configs_user/customize_test.json` file.
+
+`python3 run_dpbento.py`
 
 
