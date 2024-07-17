@@ -1,0 +1,3 @@
+fio
+python3-pip
+matplotlib
