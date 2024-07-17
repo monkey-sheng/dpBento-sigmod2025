@@ -92,6 +92,7 @@ Enter the root directory path for the DPU benchmark in the `dpdento_root` field,
 
 `"output_folder": "/path/to/your/output_folder"`
 
+## How to Run the customize experiment by DPU-bench
 
 
 
