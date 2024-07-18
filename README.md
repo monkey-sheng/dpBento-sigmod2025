@@ -25,7 +25,38 @@ DP-Bento will come with a set of prebuilt "bento boxes" of benchmarks, in 6 cate
 - end-to-end apps
 
 DP-Bento will also allow the use of external user supplied "bento boxes" of benchmarks, for flexibility and extensibility. //TODO: this is still WIP
-
+   ## How to configure the Json file as Dpu benchmark input(storage_test) 
+  
+   Check the example `/configs_user/customize_test.json` file and customize the experiment. 
+  
+   Sample JSON File 
+  ``` 
+  { 
+   "benchmark_name": "storage_test", 
+   "test_parameters": { 
+   "numjobs": [4], 
+   "block_sizes": ["1m", "2m", "4m", "8m", "16m", "32m"], 
+   "size": ["1G"], 
+   "runtime": ["30s"], 
+   "direct": [1], 
+   "iodepth": [32], 
+   "io_engine": ["io_ring"], 
+   "test_lst": ["randwrite", "randread", "write", "read"] 
+   }, 
+   "dpdento_root": "/path/to/your/DPU_bench", 
+   "output_folder": "/path/to/your/output_folder" 
+  } 
+  ``` 
+  ### Step 1: Define Benchmark Name 
+  
+   Enter the name of the benchmark test in the `benchmark_name` field. 
+  
+   `"benchmark_name": "storage_test"` 
+  
+   ### Step 2: Set Test Parameters 
+  In the `test_parameters` field, define the various test parameters. Parameters include: 
+  
+   - **
 
 ## How to configure the Json file as Dpu benchmark input(end_to_end_test)
 
@@ -33,6 +64,7 @@ Check the example `/configs_user/customize_test.json` file and customize the exp
 
 Sample JSON File
 
+```
 {
     "benchmark_name": "e2e_test",
     "test_parameters": {
@@ -42,7 +74,7 @@ Sample JSON File
     "dpdento_root": "/path/to/your/DPU_bench",
     "output_folder": "/path/to/your/output_folder"
 }
-
+```
 
 ### Step 1: Define Benchmark Name
 
