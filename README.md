@@ -48,7 +48,7 @@ Sample JSON File
 
 Enter the name of the benchmark test in the `benchmark_name` field.
 
-`"benchmark_name": "end_to_end_test"`
+`"benchmark_name": "e2e_test"`
 
 ### Step 2: Set Test Parameters
 
