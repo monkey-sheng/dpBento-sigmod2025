@@ -8,9 +8,9 @@ class ExperimentRunner:
         self.config = self.load_config(config_file)
         self.benchmark_name = self.config['benchmark_name']
         self.test_parameters = self.config['test_parameters']
-        self.dpdento_root = self.config['dpdento_root']
+        self.dpbento_root = self.config['dpbento_root']
         self.output_folder = self.config['output_folder']
-        self.experiment_script = os.path.join(self.dpdento_root, 'experiments', self.benchmark_name, 'run_experiment.sh')
+        self.experiment_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'run_experiment.sh')
 
     def load_config(self, config_file):
         with open(config_file, 'r') as f:
@@ -19,9 +19,9 @@ class ExperimentRunner:
 
     def create_directories(self):
         try:
-            os.makedirs(self.dpdento_root, exist_ok=True)
+            os.makedirs(self.dpbento_root, exist_ok=True)
         except PermissionError as e:
-            print(f"PermissionError: Cannot create directory '{self.dpdento_root}'. Check your permissions.")
+            print(f"PermissionError: Cannot create directory '{self.dpbento_root}'. Check your permissions.")
             raise e
 
         try:

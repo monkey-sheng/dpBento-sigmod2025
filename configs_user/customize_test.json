@@ -10,6 +10,6 @@
         "io_engine": ["io_ring"],
         "test_lst": ["randwrite", "randread", "write", "read"]
     },
-    "dpdento_root": "/path/to/your/DPU_bench",
+    "dpbento_root": "/path/to/your/DPU_bench",
     "output_folder": "/path/to/your/output_folder"
 }
