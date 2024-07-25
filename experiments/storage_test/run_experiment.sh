@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       shift # past value
       ;;
-    --numjobs)
+    --numProc)
       numjobs="$2"
       shift # past argument
       shift # past value
