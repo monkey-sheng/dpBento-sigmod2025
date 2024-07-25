@@ -17,6 +17,7 @@ test_dir = "/tmp/fio_test"
 log_file = "fio_test_log.txt"
 run_count = 5
 
+# TODO: not a good idea to parse cmdline arg at per box level
 # Argument parsing
 parser = argparse.ArgumentParser(description="FIO benchmark runner")
 parser.add_argument("--benchmark_name", type=str, default=benchmark_name)
@@ -31,6 +32,7 @@ parser.add_argument("--io_engine", type=str, default=io_engine)
 parser.add_argument("--test_lst", type=str, default=test_lst)
 args = parser.parse_args()
 
+### minor: you don't need this block anyway
 # Update variables with parsed arguments
 benchmark_name = args.benchmark_name
 output_folder = args.output_folder
@@ -42,6 +44,7 @@ direct = args.direct
 iodepth = args.iodepth
 io_engine = args.io_engine
 test_lst = args.test_lst
+###
 
 # Ensure test_dir exists
 if not os.path.exists(test_dir):
@@ -79,6 +82,13 @@ def run_fio_test(test_name, block_size, numjob, size, runtime, direct, iodepth, 
         
         log.write(f"Cleaning up test files for: {test_name} with block_size={block_size}, numjobs={numjob}, size={size}, runtime={runtime}, direct={direct}, iodepth={iodepth}, ioengine={ioengine}\n")
 
+# don't run it as a script
 # Run the actual benchmark
 for test in test_lst_array:
     run_fio_test(test, block_sizes, numjobs, size, runtime, direct, iodepth, io_engine)
+
+# for example, we can define a function with a signature like this
+# which will then be imported and run by run_dpbento.py
+def run_bento(*args, **kwargs):
+    # maybe just call you `run_fio_test`, or do something more complex
+    pass
