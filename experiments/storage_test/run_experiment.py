@@ -1,84 +1,104 @@
-import argparse
 import os
+import argparse
 import subprocess
+import shutil
+import json
 
-# Default values
-benchmark_name = ""
-output_folder = ""
-numjobs = 4
-block_sizes = "1m"
-size = "1G"
-runtime = "30s"
-direct = 1
-iodepth = 32
-io_engine = "io_ring"
-test_lst = "randwrite,randread,write,read"
-test_dir = "/tmp/fio_test"
-log_file = "fio_test_log.txt"
-run_count = 5
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Run FIO benchmark tests.')
+    
+    parser.add_argument('--benchmark_name', type=str, required=True, help='Name of the benchmark')
+    parser.add_argument('--output_folder', type=str, required=True, help='Output folder for results')
+    parser.add_argument('--numProc', type=int, default=4, help='Number of jobs')
+    parser.add_argument('--block_sizes', type=str, default="1m", help='Block sizes')
+    parser.add_argument('--size', type=str, default="1G", help='Size of the test file')
+    parser.add_argument('--runtime', type=str, default="30s", help='Runtime of the test')
+    parser.add_argument('--direct', type=int, default=1, help='Direct I/O flag')
+    parser.add_argument('--iodepth', type=int, default=32, help='I/O depth')
+    parser.add_argument('--io_engine', type=str, default="io_uring", help='I/O engine to use')
+    parser.add_argument('--test_lst', type=str, default="randwrite,randread,write,read", help='Comma-separated list of tests')
+    parser.add_argument('--metrics', type=str, required=True, help='Comma-separated list of metrics to report')
+    
+    return parser.parse_args()
 
-# Argument parsing
-parser = argparse.ArgumentParser(description="FIO benchmark runner")
-parser.add_argument("--benchmark_name", type=str, default=benchmark_name)
-parser.add_argument("--output_folder", type=str, default=output_folder)
-parser.add_argument("--numProc", type=int, default=numjobs)
-parser.add_argument("--block_sizes", type=str, default=block_sizes)
-parser.add_argument("--size", type=str, default=size)
-parser.add_argument("--runtime", type=str, default=runtime)
-parser.add_argument("--direct", type=int, default=direct)
-parser.add_argument("--iodepth", type=int, default=iodepth)
-parser.add_argument("--io_engine", type=str, default=io_engine)
-parser.add_argument("--test_lst", type=str, default=test_lst)
-args = parser.parse_args()
+def create_directory(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-# Update variables with parsed arguments
-benchmark_name = args.benchmark_name
-output_folder = args.output_folder
-numjobs = args.numProc
-block_sizes = args.block_sizes
-size = args.size
-runtime = args.runtime
-direct = args.direct
-iodepth = args.iodepth
-io_engine = args.io_engine
-test_lst = args.test_lst
+def run_setup_script(benchmark_name):
+    setup_script_path = os.path.join(os.path.dirname(__file__), 'setup.sh')
+    subprocess.run(['bash', setup_script_path, benchmark_name], check=True)
 
-# Ensure test_dir exists
-if not os.path.exists(test_dir):
-    os.makedirs(test_dir)
+def run_clean_script():
+    clean_script_path = os.path.join(os.path.dirname(__file__), 'clean.sh')
+    subprocess.run(['bash', clean_script_path], check=True)
 
-# Convert comma-separated strings to lists
-test_lst_array = test_lst.split(',')
+def run_fio_test(test_name, block_size, numjobs, size, runtime, direct, iodepth, ioengine, test_dir, output_folder, log_file):
+    run_count = 5
+    print(f"Running FIO test: {test_name} with block_size={block_size}, numjobs={numjobs}, size={size}, runtime={runtime}, direct={direct}, iodepth={iodepth}, ioengine={ioengine}", file=log_file)
+    
+    test_run_dir = os.path.join(output_folder, test_name, f"{block_size}_{numjobs}_{size}_{runtime}_{direct}_{iodepth}_{ioengine}")
+    create_directory(test_run_dir)
+    
+    # Ensure test_dir exists
+    create_directory(test_dir)
+    
+    for i in range(1, run_count + 1):
+        temp_output_file = os.path.join(test_run_dir, f"run{i}.txt")
+        print(f"Run #{i}", file=log_file)
+        command = [
+            "fio", 
+            f"--name={test_name}", 
+            f"--ioengine={ioengine}", 
+            f"--rw={test_name}", 
+            f"--bs={block_size}", 
+            f"--direct={direct}", 
+            f"--size={size}", 
+            f"--numjobs={numjobs}", 
+            f"--iodepth={iodepth}", 
+            f"--runtime={runtime}", 
+            "--group_reporting", 
+            f"--directory={test_dir}", 
+            f"--output={temp_output_file}"
+        ]
+        subprocess.run(command, check=True)
+        print(f"Results saved to {temp_output_file}", file=log_file)
+        shutil.rmtree(test_dir)
+        create_directory(test_dir)
 
-# Function to run FIO test and cleanup
-def run_fio_test(test_name, block_size, numjob, size, runtime, direct, iodepth, ioengine):
-    with open(log_file, 'a') as log:
-        log.write(f"Running FIO test: {test_name} with block_size={block_size}, numjobs={numjob}, size={size}, runtime={runtime}, direct={direct}, iodepth={iodepth}, ioengine={ioengine}\n")
+def run_report_script(metrics, test_params, output_folder):
+    report_script_path = os.path.join(os.path.dirname(__file__), 'report.py')
+    metrics_str = json.dumps(metrics)
+    command = ["python", report_script_path, "--metrics", metrics_str, "--output_folder", output_folder]
+    env_vars = os.environ.copy()
+    for key, value in test_params.items():
+        env_vars[key] = str(value)
+    
+    subprocess.run(command, check=True, env=env_vars)
+
+def main():
+    args = parse_arguments()
+    metrics = args.metrics.split(',')
+    
+    log_file_path = os.path.join(args.output_folder, "fio_test_log.txt")
+    
+    with open(log_file_path, 'a') as log_file:
+        create_directory(args.output_folder)
         
-        test_run_dir = os.path.join(output_folder, test_name, f"{block_size}_{numjob}_{size}_{runtime}_{direct}_{iodepth}_{ioengine}")
-        os.makedirs(test_run_dir, exist_ok=True)
+        # Run setup script
+        run_setup_script(args.benchmark_name)
         
-        for i in range(1, run_count + 1):
-            temp_output_file = os.path.join(test_run_dir, f"run{i}.txt")
-            log.write(f"Run #{i}\n")
-            
-            fio_command = [
-                "fio", f"--name={test_name}", f"--ioengine={ioengine}", f"--rw={test_name}",
-                f"--bs={block_size}", f"--direct={direct}", f"--size={size}", f"--numjobs={numjob}",
-                f"--iodepth={iodepth}", f"--runtime={runtime}", "--group_reporting",
-                f"--directory={test_dir}", f"--output={temp_output_file}"
-            ]
-            result = subprocess.run(fio_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
-            log.write(result.stdout.decode())
-            log.write(f"Results saved to {temp_output_file}\n")
-            
-            # Clean up test files for each run
-            for f in os.listdir(test_dir):
-                os.remove(os.path.join(test_dir, f))
-        
-        log.write(f"Cleaning up test files for: {test_name} with block_size={block_size}, numjobs={numjob}, size={size}, runtime={runtime}, direct={direct}, iodepth={iodepth}, ioengine={ioengine}\n")
+        test_lst = args.test_lst.split(',')
+        test_params = vars(args)  # Convert args to a dictionary
 
-# Run the actual benchmark
-for test in test_lst_array:
-    run_fio_test(test, block_sizes, numjobs, size, runtime, direct, iodepth, io_engine)
+        for test in test_lst:
+            run_fio_test(test, args.block_sizes, args.numProc, args.size, args.runtime, args.direct, args.iodepth, args.io_engine, "/tmp/fio_test", args.output_folder, log_file)
+        
+        # Run report script after all tests
+        run_report_script(metrics, test_params, args.output_folder)
+        
+        # Run clean script after all tests
+        run_clean_script()
+
+if __name__ == '__main__':
+    main()

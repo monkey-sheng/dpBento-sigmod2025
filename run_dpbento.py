@@ -10,7 +10,7 @@ class ExperimentRunner:
         self.test_parameters = self.config['test_parameters']
         self.dpbento_root = self.config['dpbento_root']
         self.output_folder = self.config['output_folder']
-        self.experiment_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'run_experiment.sh')
+        self.experiment_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'run_experiment.py')
 
     def load_config(self, config_file):
         with open(config_file, 'r') as f:
@@ -42,7 +42,7 @@ class ExperimentRunner:
         for combination in combinations:
             test_params = list(zip(keys, combination))
             command = [
-                "bash", self.experiment_script,
+                "python", self.experiment_script,
                 "--benchmark_name", self.benchmark_name,
                 "--output_folder", self.output_folder
             ]

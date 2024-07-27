@@ -3,8 +3,8 @@
 # Deactivate the virtual environment if it is active
 deactivate 2>/dev/null
 
-# Remove the virtual environment directory
-rm -rf myenv
+# Remove the virtual environment directory within the storage_test folder
+rm -rf $(dirname $0)/env
 
 # Uninstall fio
 sudo apt remove -y fio
