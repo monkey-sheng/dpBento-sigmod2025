@@ -12,6 +12,6 @@
         "metrics": ["latency", "bandwidth", "IOPS"]
     },
 
-    "dpbento_root": "/users/Chihan/DPU-bench",
-    "output_folder": "/users/Chihan/DPU-bench/experiments/storage_test/Output"
+    "dpbento_root": "/path/to/your/DPU-bench",
+    "output_folder": "/path/to/your/DPU-bench/experiments/storage_test/Output"
 }
