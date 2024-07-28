@@ -7,7 +7,7 @@ import json
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run FIO benchmark tests.')
     
-    parser.add_argument('--benchmark_name', type=str, required=True, help='Name of the benchmark')
+    parser.add_argument('--metrics', type=str, required=True, help='JSON string of metrics to report')
     parser.add_argument('--output_folder', type=str, required=True, help='Output folder for results')
     parser.add_argument('--numProc', type=int, default=4, help='Number of jobs')
     parser.add_argument('--block_sizes', type=str, default="1m", help='Block sizes')
@@ -17,7 +17,7 @@ def parse_arguments():
     parser.add_argument('--iodepth', type=int, default=32, help='I/O depth')
     parser.add_argument('--io_engine', type=str, default="io_uring", help='I/O engine to use')
     parser.add_argument('--test_lst', type=str, default="randwrite,randread,write,read", help='Comma-separated list of tests')
-    parser.add_argument('--metrics', type=str, required=True, help='Comma-separated list of metrics to report')
+    parser.add_argument('--benchmark_name', type=str, required=True, help='Name of the benchmark')
     
     return parser.parse_args()
 
@@ -78,18 +78,21 @@ def run_report_script(metrics, test_params, output_folder):
 
 def main():
     args = parse_arguments()
-    metrics = args.metrics.split(',')
+    metrics = json.loads(args.metrics)
     
     log_file_path = os.path.join(args.output_folder, "fio_test_log.txt")
+
+    # Run setup script
+    run_setup_script(args.benchmark_name)
     
     with open(log_file_path, 'a') as log_file:
         create_directory(args.output_folder)
         
-        # Run setup script
-        run_setup_script(args.benchmark_name)
+        
         
         test_lst = args.test_lst.split(',')
         test_params = vars(args)  # Convert args to a dictionary
+        test_params.pop('metrics')  # Remove metrics from test_params
 
         for test in test_lst:
             run_fio_test(test, args.block_sizes, args.numProc, args.size, args.runtime, args.direct, args.iodepth, args.io_engine, "/tmp/fio_test", args.output_folder, log_file)
@@ -97,8 +100,9 @@ def main():
         # Run report script after all tests
         run_report_script(metrics, test_params, args.output_folder)
         
-        # Run clean script after all tests
-        run_clean_script()
+    
+    # Run clean script after all tests
+    run_clean_script()
 
 if __name__ == '__main__':
     main()
