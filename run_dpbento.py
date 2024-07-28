@@ -8,6 +8,7 @@ class ExperimentRunner:
         self.config = self.load_config(config_file)
         self.benchmark_name = self.config['benchmark_name']
         self.test_parameters = self.config['test_parameters']
+        self.metrics = self.config['metrics']
         self.dpbento_root = self.config['dpbento_root']
         self.output_folder = self.config['output_folder']
         self.experiment_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'run_experiment.py')
@@ -44,7 +45,8 @@ class ExperimentRunner:
             command = [
                 "python", self.experiment_script,
                 "--benchmark_name", self.benchmark_name,
-                "--output_folder", self.output_folder
+                "--output_folder", self.output_folder,
+                "--metrics", json.dumps(self.metrics)  # Pass metrics as JSON string
             ]
             for key, value in test_params:
                 command.append(f"--{key}")

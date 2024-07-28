@@ -1,17 +1,16 @@
 {
     "benchmark_name": "storage_test",
     "test_parameters": {
-        "numProc": [4],
+        "numProc": [1,2,4,6,8],
         "block_sizes": ["1m"],
         "size": ["1G"],
-        "runtime": ["30s"],
+        "runtime": ["35s"],
         "direct": [1],
-        "iodepth": [32],
+        "iodepth": [2,4,8,16,32],
         "io_engine": ["io_uring"],
-        "test_lst": ["randwrite", "randread"],
-        "metrics": ["latency", "bandwidth", "IOPS"]
+        "test_lst": ["randread"]  
     },
-
+    "metrics": ["latency", "bandwidth", "IOPS"],
     "dpbento_root": "/users/Chihan/DPU-bench",
     "output_folder": "/users/Chihan/DPU-bench/experiments/storage_test/Output"
 }
