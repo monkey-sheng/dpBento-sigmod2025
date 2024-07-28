@@ -81,12 +81,14 @@ def main():
     metrics = json.loads(args.metrics)
     
     log_file_path = os.path.join(args.output_folder, "fio_test_log.txt")
+
+    # Run setup script
+    run_setup_script(args.benchmark_name)
     
     with open(log_file_path, 'a') as log_file:
         create_directory(args.output_folder)
         
-        # Run setup script
-        run_setup_script(args.benchmark_name)
+        
         
         test_lst = args.test_lst.split(',')
         test_params = vars(args)  # Convert args to a dictionary
@@ -98,8 +100,9 @@ def main():
         # Run report script after all tests
         run_report_script(metrics, test_params, args.output_folder)
         
-        # Run clean script after all tests
-        run_clean_script()
+    
+    # Run clean script after all tests
+    run_clean_script()
 
 if __name__ == '__main__':
     main()
