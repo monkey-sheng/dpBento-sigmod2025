@@ -10,9 +10,6 @@ rm -rf $(dirname $0)/env
 # Remove the unformated data directory within the storage_test folder
 rm -rf $(dirname $0)/Output
 
-# Uninstall fio
-sudo apt remove -y fio
-
 # Uninstall python3-pip
 sudo apt remove -y python3-pip
 
