@@ -3,6 +3,7 @@ import os
 import subprocess
 from itertools import product
 import argparse
+import logging
 
 class ExperimentRunner:
     def __init__(self, config_file):
@@ -10,12 +11,40 @@ class ExperimentRunner:
         self.benchmark_name = self.config['benchmark_name']
         self.test_parameters = self.config['test_parameters']
         self.metrics = self.config['metrics']
-        self.dpbento_root = self.config['dpbento_root']
-        self.output_folder = self.config['output_folder']
+
+        # make dpbento_root optional, use the current dir of this file.
+        # self.dpbento_root = self.config['dpbento_root']
+        self.dpbento_root = self.config.get('dpbento_root', os.path.dirname(__file__))
+
+        # make this optional too
+        # self.output_folder = self.config['output_folder']
+        self.output_dir = self.config.get('output_dir', os.path.join(self.dpbento_root, 'output'))
+
         self.experiment_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'run_experiment.py')
         self.clean_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'clean.sh')
 
-    def load_config(self, config_file):
+        # Set up logging
+        self.logger = self.setup_logging()
+        self.logger.debug('using output dir: %s, dpbento root: %s', self.output_dir, self.dpbento_root)
+
+    @staticmethod
+    def setup_logging():
+        logger = logging.getLogger('dpbento')
+        logger.setLevel(logging.DEBUG)
+
+        # Create console handler with a higher log level
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+
+        # Create formatter and add it to the handlers
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+
+        # Add the handlers to the logger
+        logger.addHandler(ch)
+        return logger
+    
+    def load_config(self, config_file) -> dict:
         with open(config_file, 'r') as f:
             config = json.load(f)
         return config
@@ -28,9 +57,9 @@ class ExperimentRunner:
             raise e
 
         try:
-            os.makedirs(self.output_folder, exist_ok=True)
+            os.makedirs(self.output_dir, exist_ok=True)
         except PermissionError as e:
-            print(f"PermissionError: Cannot create directory '{self.output_folder}'. Check your permissions.")
+            print(f"PermissionError: Cannot create directory '{self.output_dir}'. Check your permissions.")
             raise e
 
     def run_experiments(self):
@@ -47,7 +76,7 @@ class ExperimentRunner:
             command = [
                 "python", self.experiment_script,
                 "--benchmark_name", self.benchmark_name,
-                "--output_folder", self.output_folder,
+                "--output_folder", self.output_dir,
                 "--metrics", json.dumps(self.metrics)  # Pass metrics as JSON string
             ]
             for key, value in test_params:
