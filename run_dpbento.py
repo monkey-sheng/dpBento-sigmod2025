@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 from itertools import product
+import argparse
 
 class ExperimentRunner:
     def __init__(self, config_file):
@@ -12,6 +13,7 @@ class ExperimentRunner:
         self.dpbento_root = self.config['dpbento_root']
         self.output_folder = self.config['output_folder']
         self.experiment_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'run_experiment.py')
+        self.clean_script = os.path.join(self.dpbento_root, 'experiments', self.benchmark_name, 'clean.sh')
 
     def load_config(self, config_file):
         with open(config_file, 'r') as f:
@@ -31,7 +33,7 @@ class ExperimentRunner:
             print(f"PermissionError: Cannot create directory '{self.output_folder}'. Check your permissions.")
             raise e
 
-    def run(self):
+    def run_experiments(self):
         self.create_directories()
         
         # Generate all combinations of test parameters
@@ -59,9 +61,22 @@ class ExperimentRunner:
                 print(f"Command failed with error: {e}")
 
 def main():
-    config_file = 'configs_user/customize_test.json'
-    runner = ExperimentRunner(config_file)
-    runner.run()
+    parser = argparse.ArgumentParser(description='Welcome to DPU Benchmark tests.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the configuration file')
+    parser.add_argument('--clean', action='store_true', help='Run the clean script')
+    args = parser.parse_args()
+
+    runner = ExperimentRunner(args.config)
+
+    if args.clean:
+        clean_script_path = runner.clean_script
+        print(f"Running clean script: {clean_script_path}")
+        try:
+            subprocess.run(['bash', clean_script_path], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Clean command failed with error: {e}")
+    else:
+        runner.run_experiments()
 
 if __name__ == '__main__':
     main()

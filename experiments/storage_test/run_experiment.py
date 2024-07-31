@@ -102,7 +102,7 @@ def main():
         
     
     # Run clean script after all tests
-    run_clean_script()
+    # run_clean_script()
 
 if __name__ == '__main__':
     main()
