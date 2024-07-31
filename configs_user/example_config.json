@@ -1,0 +1,73 @@
+{
+    "dpbento_root": "/optional/path/to/your/DPU-bench",
+    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
+    
+    "benchmarks":
+    [
+        {
+            "benchmark_class": "storage",
+            "benchmark_items":
+            [
+                {
+                    "name": "fio",
+                    "parameters": {
+                        "numProc": [1,2,4,6,8],
+                        "block_sizes": ["1m"],
+                        "size": ["1G"],
+                        "runtime": ["35s"],
+                        "direct": [1],
+                        "iodepth": [2,4,8,16,32],
+                        "io_engine": ["io_uring"],
+                        "test_lst": ["randread"]  
+                    },
+                    "metrics": ["latency", "bandwidth", "IOPS"]
+                }
+            ]
+        },
+        {
+            "benchmark_class": "network",
+            "benchmark_items":
+            [
+                {
+                    "name": "DMA",
+                    "parameters": {
+                        "something": [],
+                        "something_else": []
+                    },
+                    "metrics": ["latency", "something else"]
+                }
+            ]
+        },
+        {
+            "benchmark_class": "compute",
+            "benchmark_items":
+            [
+                {
+                    "name": "bf3_decompress_deflate_doca",
+                    "parameters": {
+                        "something": [],
+                        "something_else": []
+                    },
+                    "metrics": ["latency", "throughput"]
+                },
+                {
+                    "name": "bf3_decompress_lz4_doca",
+                    "parameters": {
+                        "something": [],
+                        "something_else": []
+                    },
+                    "metrics": ["latency", "throughput"]
+                },
+                {
+                    "name": "bf3_SHA256_doca",
+                    "parameters": {
+                        "something": [],
+                        "something_else": []
+                    },
+                    "metrics": ["latency", "throughput"]
+                }
+            ]
+        }
+    ]
+}
+
