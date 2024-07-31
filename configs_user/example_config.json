@@ -1,10 +1,12 @@
 {
     "dpbento_root": "/optional/path/to/your/DPU-bench",
     "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
+    "user_benchmarks_dir": "/optional/path/to/user_benchmarks",
     
     "benchmarks":
     [
         {
+            // we should allow the user to specify only the benchmark class, and default to all items in that class
             "benchmark_class": "storage",
             "benchmark_items":
             [

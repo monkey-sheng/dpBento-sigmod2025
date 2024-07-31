@@ -82,8 +82,9 @@ def main():
     
     log_file_path = os.path.join(args.output_folder, "fio_test_log.txt")
 
+    # XXX: don't run setup script here
     # Run setup script
-    run_setup_script(args.benchmark_name)
+    # run_setup_script(args.benchmark_name)
     
     with open(log_file_path, 'a') as log_file:
         create_directory(args.output_folder)
