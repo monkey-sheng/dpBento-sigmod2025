@@ -33,6 +33,10 @@ class ExperimentRunner:
         self.output_dir = self.config.get('output_dir', os.path.join(self.dpbento_root, 'output'))
 
         self.bench_params: dict[str, dict] = {}
+        '''dict of benchmark item paths to their corresponding params from the user config'''
+
+        self.bench_metrics: dict[str, list[str]] = {}
+        '''dict of benchmark item paths to their corresponding metrics from the user config'''
         
         # get a list of path strs to the benchmarks to run, subsequently find scripts from these paths
         self.benchmarks_to_run = []
@@ -93,7 +97,7 @@ class ExperimentRunner:
         
         Returns: None
         '''
-        def add_bench_item_if_ok(item_path, bench_params: dict):
+        def add_bench_item_if_ok(item_path, bench_params: dict, metrics: list[str]):
             '''
             Add the benchmark item (path) to the list of benchmarks to run,
             and add the params from user config to the dict `bench_params` where the key is the item path,
@@ -103,6 +107,7 @@ class ExperimentRunner:
                 self.logger.info(f"registered benchmark '{item_path}'")
                 self.benchmarks_to_run.append(item_path)
                 self.bench_params[item_path] = bench_params
+                self.bench_metrics[item_path] = metrics
                 self.logger.debug(f"bench_params: {bench_params}")
 
             else:
@@ -110,6 +115,8 @@ class ExperimentRunner:
 
         to_run = []
         benchmark: dict
+
+        # TODO: if the json structure changes, change this accordingly!!!
         for benchmark in self.config['benchmarks']:
             bench_items = benchmark.get("benchmark_items", [])
             bench_class = benchmark["benchmark_class"]
@@ -131,7 +138,7 @@ class ExperimentRunner:
                                     if os.path.isdir(item_path:=os.path.join(bench_class_path, item_dir))]
                 for bench_items_path in bench_items_paths:
                     # get the benchmark scripts and check if executable
-                    add_bench_item_if_ok(bench_items_path, {})
+                    add_bench_item_if_ok(bench_items_path, {}, [])
                 
                 # if there are user benchmarks, add them too
                 if bench_class_user_path:
@@ -139,13 +146,14 @@ class ExperimentRunner:
                                             if os.path.isdir(item_path:=os.path.join(bench_class_user_path, item_dir))]
                     for bench_items_user_path in bench_items_user_paths:
                         # get the benchmark scripts and check if executable
-                        add_bench_item_if_ok(bench_items_user_path, {})
+                        add_bench_item_if_ok(bench_items_user_path, {}, [])
                     self.logger.info(f"Adding all user benchmark items {bench_items_user_paths} in class '{bench_class}'")
             
             # run the specified benchmarks
             else:
                 for item in bench_items:
                     bench_params = item['parameters']
+                    metrics = item.get('metrics', [])
 
                     bench_name = item['name']
                     bench_item_path_builtin = os.path.join(self.benchmarks_dir, bench_class, bench_name)
@@ -158,7 +166,7 @@ class ExperimentRunner:
                         access_ok_user = os.access(bench_item_path_user, os.X_OK)
 
                     if access_ok_builtin:
-                        add_bench_item_if_ok(bench_item_path_builtin, bench_params)
+                        add_bench_item_if_ok(bench_item_path_builtin, bench_params, metrics)
                     if access_ok_user:
                         # if we were to add a user bench that shadows the builtin bench,
                         # it would be ambiguous which one to run when reading the user config
@@ -168,7 +176,7 @@ class ExperimentRunner:
                                              but shadows builtin benchmark with same class and name,
                                              not adding the user benchmark...")
                         else:
-                            add_bench_item_if_ok(bench_item_path_user, bench_params)
+                            add_bench_item_if_ok(bench_item_path_user, bench_params, metrics)
                     else:
                         self.logger.warn(f"Cannot access benchmark '{bench_class}/{bench_name}', ignoring...")
         
@@ -180,8 +188,9 @@ class ExperimentRunner:
         This is the main function of the dpbento framework.
         '''
 
-        def run_benchmark_script(script_name: str, benchmark: str):
+        def run_benchmark_script(script_name: str, benchmark: str, opts: list[str] = []):
             script_path = os.path.join(benchmark, script_name)
+            commands = ['python3', script_path] + opts
             try:
                 subprocess.run(['python3', script_path], check=True)
             except subprocess.CalledProcessError as e:
@@ -219,13 +228,13 @@ class ExperimentRunner:
                 #     "--output_folder", self.output_dir,
                 #     "--metrics", json.dumps(self.metrics)  # Pass metrics as JSON string
                 # ]
-                command = ["python3", os.path.join(benchmark, 'run.py')]
-                for key, value in params:
-                    command.append(f"--{key}")
-                    command.append(str(value))
                 
-                self.logger.info(f"Running benchmark {benchmark} with: {' '.join(command)}")
-                if not run_benchmark_script('run.py', benchmark):
+                # command = ["python3", os.path.join(benchmark, 'run.py')]
+                # let's only put the options (and values) in there
+                opts = self.kv_list_to_opts(params)
+                
+                self.logger.info(f"Running benchmark {benchmark} with: {' '.join(opts)}")
+                if not run_benchmark_script('run.py', benchmark, opts=opts):
                     # probably don't want to report if the benchmark failed
                     continue
 
@@ -233,8 +242,19 @@ class ExperimentRunner:
             # TODO: report.py should generate the intermediate data,
             # which should include the structured output (csv etc.) and maybe some extra info,
             # the goal is to generate the final report and visualization from the intermediate data
-            if not run_benchmark_script('report.py', benchmark):
+            opts = []
+            # TODO: what do we need here, metrics?
+            metrics = # TODO: need a equivalent for bench_params, for metrics
+            if not run_benchmark_script('report.py', benchmark, opts=opts):
                 continue
+
+    @staticmethod
+    def kv_list_to_opts(kv_list):
+        opts = []
+        for key, value in kv_list:
+            opts.append(f"--{key}")
+            opts.append(str(value))
+        return opts
 
 
 def main():
