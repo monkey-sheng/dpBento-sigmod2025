@@ -33,6 +33,7 @@ class ExperimentRunner:
         self.output_dir = self.config.get('output_dir', os.path.join(self.dpbento_root, 'output'))
 
         self.bench_params: dict[str, dict] = {}
+        '''dict of benchmark item paths to their corresponding params from the user config'''
         
         # get a list of path strs to the benchmarks to run, subsequently find scripts from these paths
         self.benchmarks_to_run = []
@@ -180,8 +181,9 @@ class ExperimentRunner:
         This is the main function of the dpbento framework.
         '''
 
-        def run_benchmark_script(script_name: str, benchmark: str):
+        def run_benchmark_script(script_name: str, benchmark: str, opts: list[str] = []):
             script_path = os.path.join(benchmark, script_name)
+            commands = ['python3', script_path] + opts
             try:
                 subprocess.run(['python3', script_path], check=True)
             except subprocess.CalledProcessError as e:
@@ -219,13 +221,13 @@ class ExperimentRunner:
                 #     "--output_folder", self.output_dir,
                 #     "--metrics", json.dumps(self.metrics)  # Pass metrics as JSON string
                 # ]
-                command = ["python3", os.path.join(benchmark, 'run.py')]
-                for key, value in params:
-                    command.append(f"--{key}")
-                    command.append(str(value))
                 
-                self.logger.info(f"Running benchmark {benchmark} with: {' '.join(command)}")
-                if not run_benchmark_script('run.py', benchmark):
+                # command = ["python3", os.path.join(benchmark, 'run.py')]
+                # let's only put the options (and values) in there
+                opts = self.kv_list_to_opts(params)
+                
+                self.logger.info(f"Running benchmark {benchmark} with: {' '.join(opts)}")
+                if not run_benchmark_script('run.py', benchmark, opts=opts):
                     # probably don't want to report if the benchmark failed
                     continue
 
@@ -233,8 +235,19 @@ class ExperimentRunner:
             # TODO: report.py should generate the intermediate data,
             # which should include the structured output (csv etc.) and maybe some extra info,
             # the goal is to generate the final report and visualization from the intermediate data
-            if not run_benchmark_script('report.py', benchmark):
+            opts = []
+            # TODO: what do we need here, metrics?
+            metrics = # TODO: need a equivalent for bench_params, for metrics
+            if not run_benchmark_script('report.py', benchmark, opts=opts):
                 continue
+
+    @staticmethod
+    def kv_list_to_opts(kv_list):
+        opts = []
+        for key, value in kv_list:
+            opts.append(f"--{key}")
+            opts.append(str(value))
+        return opts
 
 
 def main():
