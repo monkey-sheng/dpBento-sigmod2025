@@ -8,11 +8,14 @@
         {
             // we should allow the user to specify only the benchmark class, and default to all items in that class
             "benchmark_class": "storage",
+            // remove this, parameters will be shared per class of benchmark, and the individual names of unit bench
+            // goes into a list
             "benchmark_items":
             [
                 {
                     "name": "fio",
                     "parameters": {
+                        "items": [],  // use this or whatever name, instead of benchmark_items
                         "numProc": [1,2,4,6,8],
                         "block_sizes": ["1m"],
                         "size": ["1G"],
@@ -20,14 +23,14 @@
                         "direct": [1],
                         "iodepth": [2,4,8,16,32],
                         "io_engine": ["io_uring"],
-                        "test_lst": ["randread"]  
+                        "test_lst": ["randread"]
                     },
                     "metrics": ["latency", "bandwidth", "IOPS"]
                 }
             ]
         },
         {
-            "benchmark_class": "network",
+            "benchmark_class": "communication",
             "benchmark_items":
             [
                 {
