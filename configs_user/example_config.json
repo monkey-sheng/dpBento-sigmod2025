@@ -1,78 +1,63 @@
+
 {
-    "dpbento_root": "/optional/path/to/your/DPU-bench",
-    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
-    "user_benchmarks_dir": "/optional/path/to/user_benchmarks",
-    
     "benchmarks":
     [
         {
-            // we should allow the user to specify only the benchmark class, and default to all items in that class
             "benchmark_class": "storage",
-            // remove this, parameters will be shared per class of benchmark, and the individual names of unit bench
-            // goes into a list
-            "benchmark_items":
-            [
-                {
-                    "name": "fio",
-                    "parameters": {
-                        "items": [],  // use this or whatever name, instead of benchmark_items
-                        "numProc": [1,2,4,6,8],
-                        "block_sizes": ["1m"],
-                        "size": ["1G"],
-                        "runtime": ["35s"],
-                        "direct": [1],
-                        "iodepth": [2,4,8,16,32],
-                        "io_engine": ["io_uring"],
-                        "test_lst": ["randread"]
-                    },
-                    "metrics": ["latency", "bandwidth", "IOPS"]
-                }
-            ]
+            "parameters": {
+                "benchmark_items": ["fio"],
+                "numProc": [1],
+                "block_sizes": ["1m"],
+                "size": ["1G"],
+                "runtime": ["10s"],
+                "runtimes": [1],
+                "direct": [1],
+                "iodepth": [2],
+                "io_engine": ["io_uring"],
+                "test_lst": ["randread"]
+            },
+            "metrics": ["avg_latency", "bandwidth", "IOPS", "percentile_clatency"]
+            
         },
+
         {
             "benchmark_class": "communication",
-            "benchmark_items":
-            [
-                {
-                    "name": "DMA",
-                    "parameters": {
-                        "something": [],
-                        "something_else": []
-                    },
-                    "metrics": ["latency", "something else"]
-                }
-            ]
+            "parameters": {
+                "benchmark_items": ["DMA", "RDMA", "TCP"], 
+                "data_size": [1024, 4096],
+                "queue_depth": 1,  
+                "something_else": []
+            },
+            "metrics": ["latency", "something else"]
         },
+
+        {
+            "benchmark_class": "e2e",
+            "parameters": {
+                "benchmark_items": ["something_else"], 
+                "scale_factors": [1, 3, 10],
+                "query_numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+                "executionMode": ["cold", "hot"]
+            },
+            "metrics": ["run_time", "avg_run_time"]
+        },
+
         {
             "benchmark_class": "compute",
-            "benchmark_items":
-            [
-                {
-                    "name": "bf3_decompress_deflate_doca",
-                    "parameters": {
-                        "something": [],
-                        "something_else": []
-                    },
-                    "metrics": ["latency", "throughput"]
-                },
-                {
-                    "name": "bf3_decompress_lz4_doca",
-                    "parameters": {
-                        "something": [],
-                        "something_else": []
-                    },
-                    "metrics": ["latency", "throughput"]
-                },
-                {
-                    "name": "bf3_SHA256_doca",
-                    "parameters": {
-                        "something": [],
-                        "something_else": []
-                    },
-                    "metrics": ["latency", "throughput"]
-                }
-            ]
+            "parameters": {
+                "benchmark_items": [], 
+                "something_else": []
+            },
+            "metrics": ["latency", "something else"]
+        },
+
+        {
+            "benchmark_class": "memory",
+            "parameters": {
+                "benchmark_items": [],  
+                "something_else": []
+            },
+            "metrics": ["latency", "something else"]
         }
     ]
 }
-

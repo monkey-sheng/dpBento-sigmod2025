@@ -13,10 +13,9 @@ lat_avg_usec_pattern = re.compile(r'clat.*?lat \(usec\):.*?avg=([\d\.]+).*?clat 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from FIO test results.')
     parser.add_argument('--metrics', type=str, required=True, help='JSON string of metrics to report')
-    parser.add_argument('--output_folder', type=str, required=True, help='Output folder for results')
     return parser.parse_args()
 
-# Convert values with suffixes (k, M, KiB, MiB) to MiB or proper units
+# Convert values with suffixes (k, M, KiB, MiB) to MiB or appropriate units
 def convert_value(value):
     if value.endswith('k'):
         return float(value[:-1]) * 1e3
@@ -47,14 +46,14 @@ def parse_fio_output(filepath):
     if extract_value(lat_avg_msec_pattern, content):
         latency = float(extract_value(lat_avg_msec_pattern, content))
     elif extract_value(lat_avg_usec_pattern, content):
-        latency = float(extract_value(lat_avg_usec_pattern, content)) / 1000  # convert usec to msec
+        latency = float(extract_value(lat_avg_usec_pattern, content)) / 1000  # Convert usec to msec
     else:
         latency = 0
 
     print(f"Parsed values from {filepath} -> IOPS: {iops}, Bandwidth: {bw} MiB/s, Latency: {latency} ms")
     return iops, bw, latency
 
-def process_files(output_folder):
+def process_files(output_folder, metrics):
     iops_list, bw_list, latency_list = [], [], []
 
     for subdir, _, files in os.walk(output_folder):
@@ -62,9 +61,12 @@ def process_files(output_folder):
             if filename.startswith('run') and filename.endswith('.txt'):
                 filepath = os.path.join(subdir, filename)
                 iops, bw, latency = parse_fio_output(filepath)
-                iops_list.append(iops)
-                bw_list.append(bw)
-                latency_list.append(latency)
+                if "IOPS" in metrics:
+                    iops_list.append(iops)
+                if "bandwidth" in metrics:
+                    bw_list.append(bw)
+                if "latency" in metrics:
+                    latency_list.append(latency)
 
     avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
     avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
@@ -74,13 +76,13 @@ def process_files(output_folder):
     return avg_iops, avg_bw, avg_latency
 
 def save_to_csv(output_folder, test_params, avg_iops, avg_bw, avg_latency):
-    # Save the results.csv file in the parent directory of the output_folder
+    # Save the results to a file named results.csv in the parent directory of output_folder
     output_file = os.path.join(os.path.dirname(output_folder), 'results.csv')
     # Define the required fields
     required_fields = ['numProc', 'block_sizes', 'size', 'runtime', 'direct', 'iodepth', 'io_engine', 'test_lst', 'avg_latency', 'avg_bandwidth', 'avg_IOPS']
     headers = required_fields
     
-    # Filter test_params to include only required fields
+    # Filter test_params to only include the required fields
     filtered_test_params = {key: test_params[key] for key in required_fields if key in test_params}
     
     # Prepare the row with average metrics
@@ -99,11 +101,11 @@ def main():
     args = parse_arguments()
     metrics = json.loads(args.metrics)
 
-    # Extract environment variables for test parameters
+    # Extract test parameters from environment variables
     test_params = {key: os.environ[key] for key in ['numProc', 'block_sizes', 'size', 'runtime', 'direct', 'iodepth', 'io_engine', 'test_lst']}
-    output_folder = args.output_folder
+    output_folder = os.path.join(os.path.dirname(__file__), 'output')
 
-    avg_iops, avg_bw, avg_latency = process_files(output_folder)
+    avg_iops, avg_bw, avg_latency = process_files(output_folder, metrics)
     
     save_to_csv(output_folder, test_params, avg_iops, avg_bw, avg_latency)
 
