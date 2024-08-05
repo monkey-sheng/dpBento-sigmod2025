@@ -8,9 +8,11 @@
         {
             // we should allow the user to specify only the benchmark class, and default to all items in that class
             "benchmark_class": "storage",
+
+            // the names of the benchmarks go in here, if it's missing let's assume we include all benchmarks
+            "benchmark_items": ["fio", "something_else"],
             "parameters": {
-                "benchmark_items": ["fio", "something_else"],  // basically the names of the benchmarks go in here, if it's missing let's assume we include all benchmarks
-                // all these parameters are shared by all the benchmarks in the class
+                // all these parameters are shared by all the benchmark items in the same benchmark class
                 "numProc": [1,2,4,6,8],
                 "block_sizes": ["1m"],
                 "size": ["1G"],
@@ -23,19 +25,73 @@
             "metrics": ["latency", "bandwidth", "IOPS"],
             // not sure how we gonna use it, but it should be benchmark name as keys and list of hints as values
             "report_hints": {
-                "fio": ["bar_plot", "something_else"],
-                "something_else": ["line_plot"]
+                "plot": "bar_plot",
+                "x": "block_sizes",
+                "y": ["latency", "IOPS"],
+                // group the bars, can be a list or a dict where values are specific values of the parameter
+                // this example is a list: for each y attribute to plot (i.e. latency and IOPS),
+                // group by numProc and iodepth, then apply max() on the values
+                "group_by": {
+                    "attributes": ["numProc", "iodepth"],
+                    "aggregate": "max"  // aggregation applied on the y value(s) of different runs
+                }
             }
         },
         {
             "benchmark_class": "communication",
+            "benchmark_items": ["DMA", "RDMA", "TCP"],
             "parameters": {
-                "benchmark_items": ["DMA", "RDMA", "TCP"], // TCP needs an ip while DMA doesn't, then
                 "data_size": [1024, 4096],
                 "queue_depth": 1,  // the code currently allows scalar values, or lists
+                "batch_size": [1, 2, 4, 8, 16, 32],
+                // IP addr doesn't apply to DMA, the DMA benchmark item script will still receive these,
+                // but during argparsing it should ignore them, i.e. `parse_known_args()` should be used
+                "host_ip": "10.10.1.2",
+                "dpu_ip": "10.10.1.42",
                 "something_else": []
             },
-            "metrics": ["latency", "something else"]
+            "metrics": ["latency", "throughput", "something else"],
+
+            // hints is needed to produce the plot for each benchmark item
+            "report_hints": {
+                "x": "data_size",  // the x-axis of the plot, can be overridden, see below
+
+                // this will produce two separate plots, one for latency and one for throughput
+                "y": ["latency", "throughput"],  // the y-axis of the plot, can be overridden, see below
+
+                // the type of plot (should come from a fixed list probably), can be overridden, see below
+                "plot":"line_plot",
+
+                // specific hints for a benchmark item
+                // for example, we want to compare DMA latency with RDMA,
+                // plotting two bars in a single plot
+                "DMA": {
+                    "plot": "bar_plot",  // override the plot type
+                    "x": "data_size",  // this needs to match the parameter name
+                    "y": ["latency"],  // this comes from `metrics`
+
+                    // reference another benchmark item(s), the same plot type, x, y, etc. will be used
+                    "compare": ["RDMA"],  // the other benchmark item(s) to compare with (i.e. seaborn param of hue)
+
+                    "group_by": {
+                        "attributes": ["numProc", "iodepth"],
+                        "aggregate": "avg",  // aggregation applied on the y value(s) of different runs
+                        
+                        // optionally, select a single (aggregated, again) value from the aggregated values
+                        // without select, all groups will be plotted, as n bars for each x value
+                        // after select we use only 1 single value, i.e. a single bar,
+                        // this is probably required for comparison
+                        "select": "max"  // use only the `select`ed (i.e. max) y value after grouping
+                    }
+
+                },
+                "TCP": {
+                    "plot": "bar_plot",
+                    "x": "data_size",
+                    "y": "latency"  // allow non-list value
+
+                }
+            }
         }
     ]
 }
