@@ -1,0 +1,41 @@
+{
+    "dpbento_root": "/optional/path/to/your/DPU-bench",
+    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
+    "user_benchmarks_dir": "/optional/path/to/user_benchmarks",
+    
+    "benchmarks":
+    [
+        {
+            // we should allow the user to specify only the benchmark class, and default to all items in that class
+            "benchmark_class": "storage",
+            "parameters": {
+                "benchmark_items": ["fio", "something_else"],  // basically the names of the benchmarks go in here, if it's missing let's assume we include all benchmarks
+                // all these parameters are shared by all the benchmarks in the class
+                "numProc": [1,2,4,6,8],
+                "block_sizes": ["1m"],
+                "size": ["1G"],
+                "runtime": ["35s"],
+                "direct": [1],
+                "iodepth": [2,4,8,16,32],
+                "io_engine": ["io_uring"],
+                "test_lst": ["randread"]
+            },
+            "metrics": ["latency", "bandwidth", "IOPS"],
+            // not sure how we gonna use it, but it should be benchmark name as keys and list of hints as values
+            "report_hints": {
+                "fio": ["bar_plot", "something_else"],
+                "something_else": ["line_plot"]
+            }
+        },
+        {
+            "benchmark_class": "communication",
+            "parameters": {
+                "benchmark_items": ["DMA", "RDMA", "TCP"], // TCP needs an ip while DMA doesn't, then
+                "data_size": [1024, 4096],
+                "queue_depth": 1,  // the code currently allows scalar values, or lists
+                "something_else": []
+            },
+            "metrics": ["latency", "something else"]
+        }
+    ]
+}
