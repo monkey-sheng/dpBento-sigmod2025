@@ -28,6 +28,9 @@ class ExperimentRunner:
         self.bench_metrics = {}
         '''Dictionary mapping benchmark item paths to metrics from the user config'''
 
+        self.bench_hints = {}
+        '''Dictionary mapping benchmark item paths to (report/plot) hints from the user config'''
+
         # Get the list of benchmark paths to run, and then find scripts in these paths
         self.benchmarks_to_run = []
         self.collect_all_benchmarks_to_run()
@@ -79,16 +82,29 @@ class ExperimentRunner:
             raise PermissionError(f"Cannot access benchmark directory '{self.benchmarks_dir}'. Please check your permissions.")
         self.logger.info(f"Benchmark directory and permissions verified.")
 
+    def run_benchmark_script(self, script_name: str, benchmark: str, opts: list[str] = []):
+            script_path = os.path.join(benchmark, script_name)
+            commands = ['python3', script_path] + opts
+            try:
+                subprocess.run(commands, check=True)
+            except subprocess.CalledProcessError as e:
+                self.logger.error(f"Running {script_name.split('.')[0]} for {benchmark} failed, error: {e}")
+                return False
+            return True
+
     def collect_all_benchmarks_to_run(self):
         '''
         Check the user JSON config file and collect all benchmarks to run, including user-provided benchmarks.
         
         Add benchmark items (paths) to `self.benchmarks_to_run`,
         and add parameters from the user config to the `self.bench_params` dictionary.
+        Metrics and hints are also added to the `self.bench_metrics` and `self.bench_hints` dictionaries, respectively.
         
         Returns: None
         '''
-        def add_bench_item_if_ok(item_path, bench_params: dict, metrics: list[str]):
+        # NOTE: right now it params, metrics and hints are shared across items in the same class, let's still
+        # store them in the dictionaries with its own item path as the key
+        def add_bench_item_if_ok(item_path: str, bench_params: dict, metrics: list[str], hints: dict):
             '''
             Add benchmark items (paths) to the list of benchmarks to run,
             and add parameters from the user config to the `bench_params` dictionary where the key is the item path,
@@ -99,6 +115,7 @@ class ExperimentRunner:
                 self.benchmarks_to_run.append(item_path)
                 self.bench_params[item_path] = bench_params
                 self.bench_metrics[item_path] = metrics
+                self.bench_hints[item_path] = hints
                 self.logger.debug(f"bench_params: {bench_params}")
             else:
                 self.logger.warning(f"Benchmark '{item_path}' missing executable scripts, ignoring...")
@@ -107,14 +124,34 @@ class ExperimentRunner:
 
         for benchmark in self.config['benchmarks']:
             bench_class = benchmark["benchmark_class"]
-            bench_params = benchmark["parameters"]
+            
+            bench_items = benchmark.get("benchmark_items", [])
+
+            # parameters, metrics and hints are shared across all benchmark items in the same class
+            bench_params = benchmark.get("parameters", {})
             metrics = benchmark.get("metrics", [])
+            hints = benchmark.get("report_hints", {})
+
             bench_class_path = os.path.join(self.benchmarks_dir, bench_class)
             if not os.access(bench_class_path, os.X_OK):
                 self.logger.warning(f"Cannot access benchmark class '{bench_class}', ignoring...")
                 continue
 
-            add_bench_item_if_ok(bench_class_path, bench_params, metrics)
+            # if not specified, get all benchmark items in the class
+            if not bench_items:
+                # get all bench items dirs in the bench class
+                bench_items_paths = [item_path for item_dir in os.listdir(bench_class_path)
+                                    if os.path.isdir(item_path:=os.path.join(bench_class_path, item_dir))]
+                for bench_items_path in bench_items_paths:
+                    # get the benchmark scripts and check if executable
+                    add_bench_item_if_ok(bench_items_path, {}, [], {})
+            else:
+                for bench_item in bench_items:
+                    bench_item_path = os.path.join(bench_class_path, bench_item)
+                    if not os.access(bench_item_path, os.X_OK):
+                        self.logger.warning(f"Cannot access benchmark item '{bench_item}', ignoring...")
+                        continue
+                    add_bench_item_if_ok(bench_class_path, bench_params, metrics, hints)
 
         self.logger.info(f"Collected benchmarks to run: {self.benchmarks_to_run}")
 
@@ -123,20 +160,10 @@ class ExperimentRunner:
         This is the main function for the dpbento framework.
         '''
 
-        def run_benchmark_script(script_name: str, benchmark: str, opts: list[str] = []):
-            script_path = os.path.join(benchmark, script_name)
-            commands = ['python3', script_path] + opts
-            try:
-                subprocess.run(commands, check=True)
-            except subprocess.CalledProcessError as e:
-                self.logger.error(f"Running {script_name.split('.')[0]} for {benchmark} failed, error: {e}")
-                return False
-            return True
-
         self.create_and_check_directories()
 
         for benchmark in self.benchmarks_to_run:
-            if not run_benchmark_script('prepare.py', benchmark):
+            if not self.run_benchmark_script('prepare.py', benchmark):
                 continue
 
             bench_params = self.bench_params[benchmark]
@@ -149,12 +176,12 @@ class ExperimentRunner:
                 opts = self.kv_list_to_opts(params)
                 
                 self.logger.info(f"Running benchmark {benchmark} with: {' '.join(opts)}")
-                if not run_benchmark_script('run.py', benchmark, opts=opts):
+                if not self.run_benchmark_script('run.py', benchmark, opts=opts):
                     continue
 
             # Add metrics parameters and run report.py
             metrics_opts = [f"--metrics={json.dumps(self.bench_metrics[benchmark])}"]
-            if not run_benchmark_script('report.py', benchmark, opts=metrics_opts):
+            if not self.run_benchmark_script('report.py', benchmark, opts=metrics_opts):
                 continue
 
     @staticmethod
@@ -167,23 +194,17 @@ class ExperimentRunner:
 
     def clean_benchmarks(self):
         '''
-        Run the clean.sh script to remove intermediate files for each benchmark class and reset state.
+        Run clean.py to remove intermediate files for each benchmark item and reset state.
         '''
         for benchmark in self.benchmarks_to_run:
-            clean_script_path = os.path.join(benchmark, 'clean.sh')
-            if os.path.exists(clean_script_path) and os.access(clean_script_path, os.X_OK):
-                self.logger.info(f"Running clean script: {clean_script_path}")
-                try:
-                    subprocess.run(['bash', clean_script_path], check=True)
-                except subprocess.CalledProcessError as e:
-                    self.logger.error(f"Running clean.sh for {benchmark} failed, error: {e}")
-            else:
-                self.logger.warning(f"Clean script not found or not executable: {benchmark}")
+            self.run_benchmark_script('clean.py', benchmark)
 
 def main():
     parser = argparse.ArgumentParser(description='Welcome to DPU benchmarking.')
     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file')
     parser.add_argument('--clean', action='store_true', help='Run clean scripts')
+    # TODO: may or may not need a standalone plot option
+    # parser.add_argument('--report_only', action='store_true', help='rerun reports for already obtained results')
     args = parser.parse_args()
 
     runner = ExperimentRunner(args.config)
