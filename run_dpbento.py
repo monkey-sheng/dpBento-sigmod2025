@@ -116,7 +116,7 @@ class ExperimentRunner:
             and add parameters from the user config to the `bench_params` dictionary where the key is the item path,
             if all scripts look okay (currently executable).
             '''
-            if all(map(lambda script: os.access(os.path.join(item_path, script), os.X_OK), BENCH_ITEM_SCRIPTS)):
+            if all(map(lambda script: os.access(os.path.join(item_path, script), os.R_OK), BENCH_ITEM_SCRIPTS)):
                 self.logger.info(f"Registering benchmark '{item_path}'")
                 self.bench_items[item_path] = bench_items
                 self.benchmarks_to_run.append(item_path)
@@ -194,13 +194,14 @@ class ExperimentRunner:
                     continue
 
             # Add metrics parameters and run report.py
+            # TODO: maybe just use comma separated values instead of json
             metrics_opts = [f"--metrics={json.dumps(self.bench_metrics[benchmark])}"]
             if not self.run_benchmark_script('report.py', benchmark, opts=metrics_opts):
                 continue
 
     @staticmethod
     def kv_list_to_opts(bench_item, kv_list):
-        opts = ['--benchmark_items', str(bench_item).strip('[]')]
+        opts = ['--benchmark_items', ','.join(bench_item)]#str(bench_item).strip('[]')
         for key, value in kv_list:
             opts.append(f"--{key}")
             opts.append(str(value))

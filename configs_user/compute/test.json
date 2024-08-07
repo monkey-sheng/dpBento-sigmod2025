@@ -1,0 +1,18 @@
+{
+    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
+    
+    "benchmarks":
+    [
+        {
+            "benchmark_class": "compute",
+            "benchmark_items": ["matrix", "int"],
+            "parameters": {
+                "data_size": [16, 64],
+                "matrix_size": [16, 256],
+                "n_workers": [1],
+                "running_time": 1
+            },
+            "metrics": ["matrix_size", "data_size", "ops/s"]
+        }
+    ]
+}
