@@ -6,7 +6,7 @@
         "executionMode": ["cold", "hot"]
     },
 
-    "metrics": ["average_run_time"],
-    "dpbento_root": "E:/Paper/DPU-bench",
-    "output_folder": "E:/Paper/DPU-bench/experiments/e2e_test/Output"
+    "metrics": ["run_time", "avg_run_time"], 
+    "dpbento_root": "/path/to/your/DPU-bench",
+    "output_folder": "/path/to/your/DPU-bench/experiments/e2e_test/Output"
 }
