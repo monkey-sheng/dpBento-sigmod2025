@@ -6,6 +6,8 @@ import subprocess
 def install_dependencies():
     print('installing stress-ng...')
     subprocess.run("sudo apt install stress-ng python3-venv -y", shell=True, check=True)
+    subprocess.run("pip install pandas", shell=True, check=True)
+    # subprocess.run("pip install numpy", shell=True, check=True)
     
     # get dir of current file
     # env_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'compute_env')
