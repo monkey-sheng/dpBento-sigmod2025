@@ -117,8 +117,8 @@ def run():
         # pattern match against the item
         if item == 'matrix':
             stdout = subprocess.run(
-                f"stress-ng --stdout --metrics --matrix {args.n_workers} --matrix-size {args.data_size} -t {args.running_time}s",
-                check=True, capture_output=True, shell=True, text=True).stdout
+                f"stress-ng --metrics --matrix {args.n_workers} --matrix-size {args.data_size} -t {args.running_time}s",
+                check=True, capture_output=True, shell=True, text=True).stderr
             collect_results_matrix(stdout, args)
         elif item == 'int':
             if args.data_size in TYPE_SIZE:
@@ -127,8 +127,8 @@ def run():
                 print(f"Invalid data size {args.data_size} for int benchmark, requires one of {TYPE_SIZE}")
                 exit(-1)
             stdout = subprocess.run(
-                f"stress-ng --stdout --metrics --cpu {args.n_workers} --cpu-method {method} -t {args.running_time}s",
-                check=True, capture_output=True, shell=True, text=True).stdout
+                f"stress-ng --metrics --cpu {args.n_workers} --cpu-method {method} -t {args.running_time}s",
+                check=True, capture_output=True, shell=True, text=True).stderr
             collect_results_int(stdout, args)
         elif item == 'float':
             if args.data_size in TYPE_SIZE:
@@ -137,8 +137,8 @@ def run():
                 print(f"Invalid data size {args.data_size} for float benchmark, requires one of {TYPE_SIZE}")
                 exit(-1)
             stdout = subprocess.run(
-                f"stress-ng --stdout --metrics --cpu {args.n_workers} --cpu-method {method} -t {args.running_time}s",
-                check=True, capture_output=True, shell=True, text=True).stdout
+                f"stress-ng --metrics --cpu {args.n_workers} --cpu-method {method} -t {args.running_time}s",
+                check=True, capture_output=True, shell=True, text=True).stderr
             collect_results_float(stdout, args)
         else:
             print(f"Invalid benchmark item {item}, requires one of {VALID_BENCHMARK_ITEMS}")
