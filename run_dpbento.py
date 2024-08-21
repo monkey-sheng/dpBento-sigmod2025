@@ -22,14 +22,20 @@ class ExperimentRunner:
         # Set the output directory
         self.output_dir = os.path.join(self.dpbento_root, 'output')
 
+        self.bench_items = {}
+        '''
+        Dictionary mapping benchmark class's path to a list[str] of benchmark items from the user config.
+        This is essentially a parameter that will be passed alongside `bench_params` to the benchmark run.py script.
+        '''
+
         self.bench_params = {}
-        '''Dictionary mapping benchmark item paths to parameters from the user config'''
+        '''Dictionary mapping benchmark class's path to parameters from the user config'''
 
         self.bench_metrics = {}
-        '''Dictionary mapping benchmark item paths to metrics from the user config'''
+        '''Dictionary mapping benchmark class's path to metrics from the user config'''
 
         self.bench_hints = {}
-        '''Dictionary mapping benchmark item paths to (report/plot) hints from the user config'''
+        '''Dictionary mapping benchmark class's path to (report/plot) hints from the user config'''
 
         # Get the list of benchmark paths to run, and then find scripts in these paths
         self.benchmarks_to_run = []
@@ -104,14 +110,15 @@ class ExperimentRunner:
         '''
         # NOTE: right now it params, metrics and hints are shared across items in the same class, let's still
         # store them in the dictionaries with its own item path as the key
-        def add_bench_item_if_ok(item_path: str, bench_params: dict, metrics: list[str], hints: dict):
+        def add_bench_item_if_ok(item_path: str, bench_items: list, bench_params: dict, metrics: list[str], hints: dict):
             '''
             Add benchmark items (paths) to the list of benchmarks to run,
             and add parameters from the user config to the `bench_params` dictionary where the key is the item path,
             if all scripts look okay (currently executable).
             '''
-            if all(map(lambda script: os.access(os.path.join(item_path, script), os.X_OK), BENCH_ITEM_SCRIPTS)):
+            if all(map(lambda script: os.access(os.path.join(item_path, script), os.R_OK), BENCH_ITEM_SCRIPTS)):
                 self.logger.info(f"Registering benchmark '{item_path}'")
+                self.bench_items[item_path] = bench_items
                 self.benchmarks_to_run.append(item_path)
                 self.bench_params[item_path] = bench_params
                 self.bench_metrics[item_path] = metrics
@@ -137,21 +144,28 @@ class ExperimentRunner:
                 self.logger.warning(f"Cannot access benchmark class '{bench_class}', ignoring...")
                 continue
 
-            # if not specified, get all benchmark items in the class
+            # if not specified, try to get all benchmark items in the class
+            # TODO: may need a more robust method to get all benchmark items
             if not bench_items:
                 # get all bench items dirs in the bench class
-                bench_items_paths = [item_path for item_dir in os.listdir(bench_class_path)
-                                    if os.path.isdir(item_path:=os.path.join(bench_class_path, item_dir))]
-                for bench_items_path in bench_items_paths:
-                    # get the benchmark scripts and check if executable
-                    add_bench_item_if_ok(bench_items_path, {}, [], {})
+                # NOTE: this tries to ignore the python virtual env directory
+                # NOTE: and assumes each bench item has its own directory
+                bench_items = [item_dir for item_dir in os.listdir(bench_class_path)
+                                if (os.path.isdir(os.path.join(bench_class_path, item_dir)) and not item_dir.endswith('env'))]
+
+
+                add_bench_item_if_ok(bench_class_path, bench_items, bench_params, metrics, hints)
+                # bench_items_paths = [item_path for item_dir in os.listdir(bench_class_path)
+                #                     if os.path.isdir(item_path:=os.path.join(bench_class_path, item_dir))]
+                # for bench_items_path in bench_items_paths:
+                #     # get the benchmark scripts and check if executable
+                #     add_bench_item_if_ok(bench_items_path, {}, [], {})
             else:
+                add_bench_item_if_ok(bench_class_path, bench_items, bench_params, metrics, hints)
                 for bench_item in bench_items:
                     bench_item_path = os.path.join(bench_class_path, bench_item)
                     if not os.access(bench_item_path, os.X_OK):
-                        self.logger.warning(f"Cannot access benchmark item '{bench_item}', ignoring...")
-                        continue
-                    add_bench_item_if_ok(bench_class_path, bench_params, metrics, hints)
+                        self.logger.info(f"Cannot access benchmark item dir '{bench_item}', ignoring...")
 
         self.logger.info(f"Collected benchmarks to run: {self.benchmarks_to_run}")
 
@@ -173,20 +187,21 @@ class ExperimentRunner:
 
             for combination in combinations:
                 params = list(zip(keys, combination))
-                opts = self.kv_list_to_opts(params)
+                opts = self.kv_list_to_opts(self.bench_items[benchmark], params)
                 
                 self.logger.info(f"Running benchmark {benchmark} with: {' '.join(opts)}")
                 if not self.run_benchmark_script('run.py', benchmark, opts=opts):
                     continue
 
             # Add metrics parameters and run report.py
+            # TODO: maybe just use comma separated values instead of json
             metrics_opts = [f"--metrics={json.dumps(self.bench_metrics[benchmark])}"]
             if not self.run_benchmark_script('report.py', benchmark, opts=metrics_opts):
                 continue
 
     @staticmethod
-    def kv_list_to_opts(kv_list):
-        opts = []
+    def kv_list_to_opts(bench_item, kv_list):
+        opts = ['--benchmark_items', ','.join(bench_item)]#str(bench_item).strip('[]')
         for key, value in kv_list:
             opts.append(f"--{key}")
             opts.append(str(value))

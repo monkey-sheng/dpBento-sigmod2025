@@ -11,7 +11,11 @@ dist/
 build/
 *.egg-info/
 
+# intermediate files
+*.csv
+
 # Virtual environments
 venv/
 env/
+*env/
 .vscode/*

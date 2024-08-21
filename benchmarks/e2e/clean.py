@@ -61,11 +61,9 @@ def main():
     remove_directory(output_path)
 
     # Uninstall packages
-    remove_package('fio')
     remove_package('python3-pip')
 
     # Purge packages
-    purge_package('fio')
     purge_package('python3-pip')
 
     # Remove any unused dependencies
