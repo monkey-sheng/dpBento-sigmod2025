@@ -1,0 +1,18 @@
+{
+    "benchmark_class": "communication",
+    "benchmark_items": ["DMA", "RDMA", "TCP"],
+    "parameters": {
+        "data_size": [8, 16, 64, 128, 512, 1024, 2048, 4096, 8192],
+        "queue_depth": [1, 2, 4, 8, 16],
+        "number_of_threads": [1, 2, 4, 10, 20],
+        "test_rounds":[100, 1000, 10000],
+        "host_pci": "e1:00.1",
+        "dpu_pci": "03:00.1",
+        "host_ip": "10.10.1.2",
+        "dpu_ip": "10.10.1.42",
+        "port": "8080"
+    },
+    "metrics": ["latency", "throughput"],
+    "dpbento_root": "/path/to/your/DPU-bench",
+    "output_dir": "/path/to/your/DPU-bench/experiments/storage_test/Output"
+}
