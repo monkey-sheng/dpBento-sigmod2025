@@ -8,14 +8,6 @@ def run_command(command, check=True, shell=False):
     logging.info(f"Running command: {' '.join(command)}")
     subprocess.run(command, check=check, shell=shell)
 
-def deactivate_virtualenv():
-    """Deactivate the virtual environment if it is active."""
-    if "VIRTUAL_ENV" in os.environ:
-        deactivate_script = os.path.join(os.environ["VIRTUAL_ENV"], 'bin', 'deactivate')
-        if os.path.exists(deactivate_script):
-            run_command(['source', deactivate_script], shell=True)
-            logging.info("Deactivated virtual environment.")
-
 def remove_directory(path):
     """Remove the specified directory if it exists."""
     if os.path.exists(path):
@@ -41,6 +33,12 @@ def clean_package_cache():
     """Clean up package cache."""
     run_command(['sudo', 'apt', 'clean'])
     logging.info("Cleaned up package cache.")
+
+def deactivate_virtualenv():
+    """Deactivate the virtual environment."""
+    deactivate_command = "deactivate"
+    logging.info("Deactivating the virtual environment.")
+    subprocess.run(deactivate_command, shell=True, executable="/bin/bash")
 
 def main():
     logging.basicConfig(level=logging.INFO)
