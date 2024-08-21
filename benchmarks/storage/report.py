@@ -11,6 +11,8 @@ bw_pattern = re.compile(r'bw=([\d.]+[kM]?[KM]?iB/s)')
 lat_avg_msec_pattern = re.compile(r'clat.*?lat \(msec\):.*?avg=([\d\.]+).*?clat percentiles', re.DOTALL)
 lat_avg_usec_pattern = re.compile(r'clat.*?lat \(usec\):.*?avg=([\d\.]+).*?clat percentiles', re.DOTALL)
 percentile_section_pattern = re.compile(r'clat percentiles.*?\n(.*?)bw', re.DOTALL)
+percentiles_pattern = re.compile(r'\|\s+(\d+\.\d+th)=\s*\[\s*(\d+)\s*\]')
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
@@ -52,10 +54,12 @@ def extract_percentiles_section(text):
     return match.group(1)
 
 def extract_percentiles(percentiles_text):
-    percentiles = re.findall(r'\|\s+(\d+\.\d+th)=\s*\[(\d+)\]', percentiles_text)
-    percentiles_dict = {percentile: int(value) for percentile, value in percentiles}
+    # Extracting percentiles using the updated pattern that accounts for spaces
+    percentiles = re.findall(percentiles_pattern, percentiles_text)
+    percentiles_dict = {percentile.strip(): int(value.strip()) for percentile, value in percentiles}
     print(f"Extracted percentiles: {percentiles_dict}")  # Debug output
     return percentiles_dict
+
 
 def parse_benchmark_output(filepath, metrics):
     print(f"Parsing file: {filepath}")  # Debug output
@@ -78,23 +82,26 @@ def parse_benchmark_output(filepath, metrics):
         else:
             result['avg_latency'] = 0
         print(f"Extracted avg_latency: {result['avg_latency']}")  # Debug output
-    if "percentile_clatency" in metrics:
-        percentiles_section = extract_percentiles_section(content)
-        if percentiles_section:
-            result['percentile_clatency'] = extract_percentiles(percentiles_section)
-        else:
-            result['percentile_clatency'] = {}
-        print(f"Extracted percentiles: {result['percentile_clatency']}")  # Debug output
+
+    # Check for percentile_clatency entries in metrics
+    percentiles_section = extract_percentiles_section(content)
+    if percentiles_section:
+        percentiles = extract_percentiles(percentiles_section)
+        for metric in metrics:
+            if "percentile" in metric:
+                percentile_key = metric.split()[0] + ".00th"
+                if percentile_key in percentiles:
+                    result[percentile_key] = percentiles[percentile_key]
+                    print(f"Extracted {percentile_key}: {result[percentile_key]}")  # Debug output
+                else:
+                    print(f"Missing percentile: {percentile_key}")  # Debug output
 
     return result
 
+
+
 def process_files(output_folder, metrics):
     results = []
-    percentiles_keys = [
-        '1.00th', '5.00th', '10.00th', '20.00th', '30.00th', '40.00th',
-        '50.00th', '60.00th', '70.00th', '80.00th', '90.00th', '95.00th',
-        '99.00th', '99.50th', '99.90th', '99.95th', '99.99th'
-    ]
 
     for test_lst in os.listdir(output_folder):
         test_lst_path = os.path.join(output_folder, test_lst)
@@ -115,7 +122,9 @@ def process_files(output_folder, metrics):
                     iodepth = params[5]
                     io_engine = '_'.join(params[6:])
                     
-                    iops_list, bw_list, latency_list, percentile_lists = [], [], [], {key: [] for key in percentiles_keys}
+                    iops_list, bw_list, latency_list = [], [], []
+                    percentile_lists = {metric.split()[0] + ".00th": [] for metric in metrics if "percentile" in metric}
+
                     for filename in os.listdir(test_params_path):
                         if filename.startswith('run') and filename.endswith('.txt'):
                             filepath = os.path.join(test_params_path, filename)
@@ -126,16 +135,10 @@ def process_files(output_folder, metrics):
                                 bw_list.append(parsed_output.get('bandwidth', 0))
                             if "avg_latency" in metrics:
                                 latency_list.append(parsed_output.get('avg_latency', 0))
-                            if "percentile_clatency" in metrics:
-                                percentiles = parsed_output.get('percentile_clatency', {})
-                                for key in percentiles_keys:
-                                    if key in percentiles:
-                                        percentile_lists[key].append(percentiles[key])
-                    
-                    print(f"IOPS list: {iops_list}")  # Debug output
-                    print(f"Bandwidth list: {bw_list}")  # Debug output
-                    print(f"Latency list: {latency_list}")  # Debug output
-                    print(f"Percentile lists: {percentile_lists}")  # Debug output
+                            for percentile in percentile_lists.keys():
+                                if percentile in parsed_output:
+                                    percentile_lists[percentile].append(parsed_output[percentile])
+
 
                     avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
                     avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
@@ -150,14 +153,16 @@ def process_files(output_folder, metrics):
                         'runtime': runtime,
                         'direct': direct,
                         'iodepth': iodepth,
-                        'io_engine': io_engine,
-                        'avg_latency': avg_latency if "avg_latency" in metrics else None,
-                        'bandwidth': avg_bw if "bandwidth" in metrics else None,
-                        'IOPS': avg_iops if "IOPS" in metrics else None
+                        'io_engine': io_engine
                     }
 
-                    if "percentile_clatency" in metrics:
-                        result.update(avg_percentiles)
+                    if "avg_latency" in metrics:
+                        result['avg_latency'] = avg_latency
+                    if "bandwidth" in metrics:
+                        result['bandwidth'] = avg_bw
+                    if "IOPS" in metrics:
+                        result['IOPS'] = avg_iops
+                    result.update(avg_percentiles)
 
                     print(f"Result: {result}")  # Debug output
 
@@ -165,17 +170,26 @@ def process_files(output_folder, metrics):
 
     return results
 
-def save_to_csv(results, output_folder):
-    # Save the results to a file named results.csv in the parent directory of output_folder
+
+def save_to_csv(results, output_folder, metrics):
+    # Define the base fields that should always be included
+    base_fields = ['test_lst', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine']
+    # Define the possible metric fields
+    metric_fields_map = {
+        'avg_latency': 'avg_latency',
+        'bandwidth': 'bandwidth',
+        'IOPS': 'IOPS',
+    }
+    
+    # Generate the required fields based on the metrics provided
+    required_fields = base_fields[:]
+    for metric in metrics:
+        if "percentile" in metric:
+            required_fields.append(metric.split()[0] + ".00th")
+        elif metric in metric_fields_map:
+            required_fields.append(metric_fields_map[metric])
+    
     output_file = os.path.join(output_folder, 'results.csv')
-    # Define the required fields
-    required_fields = [
-        'test_lst', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine',
-        'avg_latency', 'bandwidth', 'IOPS',
-        '1.00th', '5.00th', '10.00th', '20.00th', '30.00th', '40.00th',
-        '50.00th', '60.00th', '70.00th', '80.00th', '90.00th', '95.00th',
-        '99.00th', '99.50th', '99.90th', '99.95th', '99.99th'
-    ]
     
     if not os.path.exists(output_file):
         with open(output_file, 'w', newline='') as f:
@@ -209,7 +223,7 @@ def main():
         return
 
     try:
-        save_to_csv(results, output_folder)
+        save_to_csv(results, output_folder, metrics)
     except Exception as e:
         logging.error(f"Error saving to CSV: {e}")
 
@@ -217,3 +231,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
