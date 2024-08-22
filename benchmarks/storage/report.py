@@ -111,6 +111,8 @@ def process_files(output_folder, metrics):
                     if "IOPS" in metrics:
                         result['IOPS'] = avg_iops
 
+                    logging.debug(f"latency list : {latency_list}")
+
                     if latency_list and percentiles_to_calculate:
                         latency_distribution = np.array(latency_list)
                         for percentile in percentiles_to_calculate:
