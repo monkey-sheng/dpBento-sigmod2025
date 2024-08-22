@@ -34,25 +34,12 @@ def clean_package_cache():
     run_command(['sudo', 'apt', 'clean'])
     logging.info("Cleaned up package cache.")
 
-def deactivate_virtualenv():
-    """Deactivate the virtual environment."""
-    deactivate_command = "deactivate"
-    logging.info("Deactivating the virtual environment.")
-    subprocess.run(deactivate_command, shell=True, executable="/bin/bash")
-
 def main():
     logging.basicConfig(level=logging.INFO)
     
     # Get the directory of the clean.py script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"Script directory: {script_dir}")
-
-    # Deactivate the virtual environment
-    deactivate_virtualenv()
-
-    # Remove the virtual environment directory within the script directory
-    env_path = os.path.join(script_dir, 'env')
-    remove_directory(env_path)
 
     # Remove the output directory within the script directory
     output_path = os.path.join(script_dir, 'output')
@@ -72,7 +59,7 @@ def main():
     # Clean up package cache
     clean_package_cache()
 
-    logging.info("Cleanup complete. All installed packages and virtual environment have been removed.")
+    logging.info("Cleanup complete. All installed packages have been removed.")
 
 if __name__ == "__main__":
     main()
