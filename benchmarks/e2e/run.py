@@ -30,6 +30,7 @@ def run_clean_script():
     clean_script_path = os.path.join(os.path.dirname(__file__), 'clean.sh')
     subprocess.run(['bash', clean_script_path], check=True)
 
+#  for every query(they can choose what to include)
 def run_benchmark_test(scale_factors, query_numbers, execution_modes, output_folder, log_file):
     results = []
     parquet_base_dir = Path('/tmp/e2e_test')

@@ -1,19 +1,17 @@
 import os
 import subprocess
 import logging
-import venv
 
 def run_command(command, check=True, shell=False):
     """Run a shell command."""
     logging.info(f"Running command: {' '.join(command)}")
     subprocess.run(command, check=check, shell=shell)
 
-def install_packages(env_path, requirements_path):
-    """Install packages in the virtual environment."""
-    pip_executable = os.path.join(env_path, 'bin', 'pip')
-    run_command([pip_executable, 'install', '--upgrade', 'pip'])
+def install_packages(requirements_path):
+    """Install packages globally using pip."""
+    run_command(['pip3', 'install', '--upgrade', 'pip'])
     if os.path.exists(requirements_path):
-        run_command([pip_executable, 'install', '-r', requirements_path])
+        run_command(['pip3', 'install', '-r', requirements_path])
     else:
         logging.warning(f"requirements.txt not found at {requirements_path}")
 
@@ -36,16 +34,11 @@ def main():
     # Install python3-pip
     run_command(['sudo', 'apt', 'install', '-y', 'python3-pip'])
 
-    # Create virtual environment
-    env_path = os.path.join(benchmark_dir, 'env')
-    venv.create(env_path, with_pip=True)
-    logging.info("Created virtual environment.")
-
-    # Install packages from requirements.txt in the virtual environment
+    # Install packages globally from requirements.txt
     requirements_path = os.path.join(benchmark_dir, 'requirements.txt')
-    install_packages(env_path, requirements_path)
+    install_packages(requirements_path)
 
-    logging.info("Setup complete. To activate the virtual environment, use: source env/bin/activate")
+    logging.info("Setup complete. Python packages have been installed globally.")
 
 if __name__ == "__main__":
     main()

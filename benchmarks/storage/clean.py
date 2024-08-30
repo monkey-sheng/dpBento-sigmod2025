@@ -8,14 +8,6 @@ def run_command(command, check=True, shell=False):
     logging.info(f"Running command: {' '.join(command)}")
     subprocess.run(command, check=check, shell=shell)
 
-def deactivate_virtualenv():
-    """Deactivate the virtual environment if it is active."""
-    if "VIRTUAL_ENV" in os.environ:
-        deactivate_script = os.path.join(os.environ["VIRTUAL_ENV"], 'bin', 'deactivate')
-        if os.path.exists(deactivate_script):
-            run_command(['source', deactivate_script], shell=True)
-            logging.info("Deactivated virtual environment.")
-
 def remove_directory(path):
     """Remove the specified directory if it exists."""
     if os.path.exists(path):
@@ -49,13 +41,6 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"Script directory: {script_dir}")
 
-    # Deactivate the virtual environment
-    deactivate_virtualenv()
-
-    # Remove the virtual environment directory within the script directory
-    env_path = os.path.join(script_dir, 'env')
-    remove_directory(env_path)
-
     # Remove the output directory within the script directory
     output_path = os.path.join(script_dir, 'output')
     remove_directory(output_path)
@@ -74,7 +59,7 @@ def main():
     # Clean up package cache
     clean_package_cache()
 
-    logging.info("Cleanup complete. All installed packages and virtual environment have been removed.")
+    logging.info("Cleanup complete. All installed packages have been removed.")
 
 if __name__ == "__main__":
     main()
