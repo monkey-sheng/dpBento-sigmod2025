@@ -20,9 +20,9 @@ def parse_arguments():
     parser.add_argument('--test_rounds', type=int, default=100, help='Total number of transfers')
     parser.add_argument('--host_pci', type=str, default="e1:00.1", help='PCI address of host')
     parser.add_argument('--dpu_pci', type=str, default="03:00.1", help='PCI address of DPU')
-    parser.add_argument('--host_ip', type=str, default="10.10.1.2", help='IP address of host')
-    parser.add_argument('--host_username', type=str, default="10.10.1.2", help='username of host')
-    parser.add_argument('--dpu_ip', type=str, default="10.10.1.42", help='IP address of dpu')
+    parser.add_argument('--host_ip', type=str, default="10.70.60.11", help='IP address of host')
+    parser.add_argument('--host_username', type=str, default="annali", help='username of host')
+    parser.add_argument('--dpu_ip', type=str, default="192.168.100.2", help='IP address of dpu')
     parser.add_argument('--port', type=int, default=8080, help='Port number')
     
     return parser.parse_args()
@@ -31,7 +31,7 @@ def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         
-def ssh_into_host(hostip, username, port, file_size, threads, total_requests, log_file):
+def ssh_into_host(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
     
     file_path = os.path.join(os.path.dirname(__file__), "tcp")
     print(file_path)
@@ -40,7 +40,7 @@ def ssh_into_host(hostip, username, port, file_size, threads, total_requests, lo
     print(shell_script)
     
     with open(log_file, 'w') as log:
-        command = ["bash", shell_script, username, hostip, port, file_size, threads, total_requests, file_path]
+        command = ["bash", shell_script, username, hostip, port, file_size, threads, total_requests, output_file]
         subprocess.run(command, stdout=log, stderr=log, text=True)
 
 def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, dpu_pci, host_username, host_ip, dpu_ip, output_folder, log_file, benchmark_item):
@@ -52,28 +52,9 @@ def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, 
     temp_output_file = os.path.join(test_run_dir, f"output.csv")
     
     if benchmark_item == "TCP":
-        ssh_into_host(host_ip, host_username, port, data_size, threads, test_rounds, log_file)
+        ssh_into_host(host_ip, host_username, port, data_size, threads, test_rounds, log_file, temp_output_file)
         
-        print(f"SSH to host completed. Now starting the client on the DPU...", file=log_file)
-        
-        # initialize client
-        client_directory = os.path.join(os.path.dirname(__file__), 'tcp/client')
-        os.chdir(client_directory)
-
-        try:
-            subprocess.run(["gcc", "-o", "client", "client.c"], check=True)
-            print(f"C program compiled successfully.", file={log_file})
-        except subprocess.CalledProcessError as e:
-            print(f"Compilation failed: {e}", file={log_file})
-            exit(1)
-
-        # run the compiled client program with arguments
-        try:
-            subprocess.run(["./client", host_ip, port, data_size, threads, test_rounds, temp_output_file], check=True)
-            print(f"Client program executed successfully.", file={log_file})
-        except subprocess.CalledProcessError as e:
-            print(f"Client execution failed: {e}", file={log_file})
-            
+        print(f"SSH to host completed. Server on host started. Client on DPU started. File Transfer complete.", file=log_file)
         print(f"Results saved to {temp_output_file}", file=log_file)
    
 def main():
