@@ -31,7 +31,7 @@ def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         
-def ssh_into_host(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
+def ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
     
     file_path = os.path.join(os.path.dirname(__file__), "tcp")
     print(file_path)
@@ -52,10 +52,13 @@ def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, 
     temp_output_file = os.path.join(test_run_dir, f"output.csv")
     
     if benchmark_item == "TCP":
-        ssh_into_host(host_ip, host_username, port, data_size, threads, test_rounds, log_file, temp_output_file)
+        ssh_into_host_run_server_and_client(host_ip, host_username, port, data_size, threads, test_rounds, log_file, temp_output_file)
         
         print(f"SSH to host completed. Server on host started. Client on DPU started. File Transfer complete.", file=log_file)
         print(f"Results saved to {temp_output_file}", file=log_file)
+        
+    if benchmark_item == "RDMA":
+        pass
    
 def main():
     args = parse_arguments()
