@@ -5,8 +5,6 @@ import paramiko
 from getpass import getpass
 import time
 
-# TODO question: How should username and password be passed in? Also in configs_user json? 
-# TODO question: SCP the code to host??
 # TODO question: ssh connection cannot be stopped before process terminates, so I'll have to ssh into the host twice? Once to start the server and once to stop the server? 
 
 def parse_arguments():
@@ -23,6 +21,7 @@ def parse_arguments():
     parser.add_argument('--host_pci', type=str, default="e1:00.1", help='PCI address of host')
     parser.add_argument('--dpu_pci', type=str, default="03:00.1", help='PCI address of DPU')
     parser.add_argument('--host_ip', type=str, default="10.10.1.2", help='IP address of host')
+    parser.add_argument('--host_username', type=str, default="10.10.1.2", help='username of host')
     parser.add_argument('--dpu_ip', type=str, default="10.10.1.42", help='IP address of dpu')
     parser.add_argument('--port', type=int, default=8080, help='Port number')
     
@@ -32,40 +31,19 @@ def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         
-def ssh_into_host(hostname, username, command, log_file):
-    password = getpass("Enter SSH password: ")
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+def ssh_into_host(hostip, username, port, file_size, threads, total_requests, log_file):
+    
+    file_path = os.path.join(os.path.dirname(__file__), "tcp")
+    print(file_path)
 
-    try:
-        print("Starting SSH into host...", file={log_file})
-        ssh.connect(hostname, username=username, password=password)
-        print(f"Connected to host...", file={log_file})
-        
-        command = f"""
-        cd transfer/tcp;
-        ./server.sh
-        """
-        
-        stdin, stdout, stderr = ssh.exec_command(command)
+    shell_script = os.path.join(file_path, "client.sh")
+    print(shell_script)
+    
+    with open(log_file, 'w') as log:
+        command = ["bash", shell_script, username, hostip, port, file_size, threads, total_requests, file_path]
+        subprocess.run(command, stdout=log, stderr=log, text=True)
 
-        # Read the output from the command
-        output = stdout.read().decode()
-        errors = stderr.read().decode()
-
-        # Capture the output and errors
-        output = stdout.read().decode('utf-8')
-        errors = stderr.read().decode('utf-8')
-        
-        print("Command output:" + output, file={log_file})
-        if errors:
-            print("Command errors:" + errors, file={log_file})
-            
-    finally:
-        time.sleep(10)
-        ssh.close()
-
-def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, dpu_pci, host_ip, dpu_ip, output_folder, log_file, benchmark_item):
+def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, dpu_pci, host_username, host_ip, dpu_ip, output_folder, log_file, benchmark_item):
     print(f"Running {benchmark_item} test with block_size={data_size} bytes, queue depth={queue_depth}, threads={threads}, test_rounds={test_rounds}", file=log_file)
     
     test_run_dir = os.path.join(output_folder, benchmark_item, f"{data_size}_{queue_depth}_{threads}_{test_rounds}")
@@ -74,9 +52,7 @@ def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, 
     temp_output_file = os.path.join(test_run_dir, f"output.csv")
     
     if benchmark_item == "TCP":
-        # TODO Where should the username and password be defined? 
-        username = "temp"
-        ssh_into_host(host_ip, username, log_file)
+        ssh_into_host(host_ip, host_username, port, data_size, threads, test_rounds, log_file)
         
         print(f"SSH to host completed. Now starting the client on the DPU...", file=log_file)
         
