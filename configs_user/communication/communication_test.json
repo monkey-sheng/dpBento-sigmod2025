@@ -1,0 +1,22 @@
+{
+    "benchmarks":
+    [
+        {
+            "benchmark_class": "communication",
+            "benchmark_items": ["DMA", "RDMA", "TCP"],
+            "parameters": {
+                "data_size": [8, 16, 64, 128, 512, 1024, 2048, 4096, 8192],
+                "queue_depth": [1, 2, 4, 8, 16],
+                "threads": [1, 2, 4, 10, 20],
+                "test_rounds":[100, 1000, 10000],
+                "host_pci": "e1:00.1",
+                "dpu_pci": "03:00.1",
+                "host_ip": "10.70.60.11",
+                "host_username":"annali",
+                "dpu_ip": "192.168.100.2",
+                "port": "8080"
+            },
+            "metrics": ["latency", "throughput"]
+        }
+    ]
+}
