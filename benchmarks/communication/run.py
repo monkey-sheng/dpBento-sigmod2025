@@ -5,8 +5,6 @@ import paramiko
 from getpass import getpass
 import time
 
-# TODO question: ssh connection cannot be stopped before process terminates, so I'll have to ssh into the host twice? Once to start the server and once to stop the server? 
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run communication benchmark tests.')
     
@@ -31,14 +29,15 @@ def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         
-def ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
+def tcp_ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
     
+    # file path to the tcp folder 
     file_path = os.path.join(os.path.dirname(__file__), "tcp")
-    print(file_path)
 
+    # path to the shell script that initiates the ssh connection to host, starts the server on host, and ssh back to dpu to start client side on dpu
     shell_script = os.path.join(file_path, "client.sh")
-    print(shell_script)
     
+    # outputs the echo commands from shell script to the log file
     with open(log_file, 'w') as log:
         command = ["bash", shell_script, username, hostip, port, file_size, threads, total_requests, output_file]
         subprocess.run(command, stdout=log, stderr=log, text=True)
@@ -52,12 +51,13 @@ def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, 
     temp_output_file = os.path.join(test_run_dir, f"output.csv")
     
     if benchmark_item == "TCP":
-        ssh_into_host_run_server_and_client(host_ip, host_username, port, data_size, threads, test_rounds, log_file, temp_output_file)
+        tcp_ssh_into_host_run_server_and_client(host_ip, host_username, port, data_size, threads, test_rounds, log_file, temp_output_file)
         
         print(f"SSH to host completed. Server on host started. Client on DPU started. File Transfer complete.", file=log_file)
         print(f"Results saved to {temp_output_file}", file=log_file)
         
     if benchmark_item == "RDMA":
+        # RDMA to be implemented
         pass
    
 def main():
