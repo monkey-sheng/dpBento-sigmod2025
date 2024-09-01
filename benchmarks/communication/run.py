@@ -16,8 +16,8 @@ def parse_arguments():
     parser.add_argument('--queue_depth', type=int, default=1, help='Queue depth')
     parser.add_argument('--threads', type=int, default=1, help='Number of threads')
     parser.add_argument('--test_rounds', type=int, default=100, help='Total number of transfers')
-    parser.add_argument('--host_ib_dev', type=str, default="e1:00.1", help='PCI address of host')
-    parser.add_argument('--dpu_ib_dev', type=str, default="03:00.1", help='PCI address of DPU')
+    parser.add_argument('--host_ib_dev', type=str, default="mlx5_2", help='IB device address of host')
+    parser.add_argument('--dpu_ib_dev', type=str, default="mlx5_4", help='IB device address of DPU')
     parser.add_argument('--host_ip', type=str, default="10.70.60.11", help='IP address of host')
     parser.add_argument('--host_username', type=str, default="annali", help='username of host')
     parser.add_argument('--dpu_ip', type=str, default="192.168.100.2", help='IP address of dpu')
@@ -45,6 +45,14 @@ def tcp_ssh_into_host_run_server_and_client(hostip, username, port, file_size, t
 def rdma_ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
     pass
 
+def ssh_clean_host_tcp_directory(host_username, host_ip, log_file):
+    sh_path = os.path.join(os.path.dirname(__file__), "clean.sh")      
+    # rm -rf /tmp/benchmark_tcp in host that was scp transferred to host during tcp_ssh_into_host_run_server_and_client()
+    with open(log_file, 'w') as log:
+        command = ["bash", sh_path, host_username, host_ip]
+        subprocess.run(command, stdout=log, stderr=log, text=True)
+
+
 def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, dpu_pci, host_username, host_ip, dpu_ip, output_folder, log_file, benchmark_item):
     print(f"Running {benchmark_item} test with block_size={data_size} bytes, queue depth={queue_depth}, threads={threads}, test_rounds={test_rounds}", file=log_file)
     
@@ -64,7 +72,9 @@ def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_pci, 
         
         print(f"SSH to host completed. Server on host started. Client on DPU started. File Transfer complete.", file=log_file)
         print(f"Results saved to {temp_output_file}", file=log_file)
-        
+    
+    ssh_clean_host_tcp_directory(host_username, host_ip, log_file)
+
    
 def main():
     args = parse_arguments()

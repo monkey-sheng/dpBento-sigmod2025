@@ -56,7 +56,7 @@ def main():
 
     # Clean up package cache
     clean_package_cache()
-
+    
     logging.info("Cleanup complete. All installed packages have been removed.")
 
 if __name__ == "__main__":
