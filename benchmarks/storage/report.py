@@ -43,19 +43,32 @@ def parse_benchmark_output(filepath):
     with open(filepath, 'r') as file:
         content = file.read()
 
-    result = {}
+    runs = content.split("\nRun #")
+    results = []
 
-    result['IOPS'] = convert_value(extract_value(iops_pattern, content)) if extract_value(iops_pattern, content) else 0
-    result['bandwidth'] = convert_value(extract_value(bw_pattern, content)) if extract_value(bw_pattern, content) else 0
-    
-    if extract_value(lat_avg_msec_pattern, content):
-        result['avg_latency'] = float(extract_value(lat_avg_msec_pattern, content))
-    elif extract_value(lat_avg_usec_pattern, content):
-        result['avg_latency'] = float(extract_value(lat_avg_usec_pattern, content)) / 1000  # Convert usec to msec
-    else:
-        result['avg_latency'] = 0
+    for run in runs[1:]:  # Skip the first split part before 'Run1'
+        result = {}
 
-    return result
+        lat_match_msec = extract_value(lat_avg_msec_pattern, run)
+        lat_match_usec = extract_value(lat_avg_usec_pattern, run)
+        
+        if lat_match_msec:
+            result['avg_latency'] = float(lat_match_msec)
+        elif lat_match_usec:
+            result['avg_latency'] = float(lat_match_usec) / 1000  # Convert usec to msec
+        else:
+            continue  
+        
+        iops = extract_value(iops_pattern, run)
+        bw = extract_value(bw_pattern, run)
+        
+        result['IOPS'] = convert_value(iops) if iops else 0
+        result['bandwidth'] = convert_value(bw) if bw else 0
+        
+        results.append(result)
+
+    return results
+
 
 def process_files(output_folder, metrics):
     results = []
@@ -80,15 +93,12 @@ def process_files(output_folder, metrics):
                     iodepth = params[5]
                     io_engine = '_'.join(params[6:])
                     
-                    iops_list, bw_list, latency_list = [], [], []
-
-                    for filename in os.listdir(test_params_path):
-                        if filename.startswith('run') and filename.endswith('.txt'):
-                            filepath = os.path.join(test_params_path, filename)
-                            parsed_output = parse_benchmark_output(filepath)
-                            iops_list.append(parsed_output.get('IOPS', 0))
-                            bw_list.append(parsed_output.get('bandwidth', 0))
-                            latency_list.append(parsed_output.get('avg_latency', 0))
+                    combined_output_file = os.path.join(test_params_path, "combined_results.txt")
+                    parsed_outputs = parse_benchmark_output(combined_output_file)
+                    
+                    iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
+                    bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
+                    latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
 
                     avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
                     avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
