@@ -9,12 +9,13 @@ THREADS="$5"
 TOTAL_REQUESTS="$6"
 LOCAL_DIRECTORY="$7"  # Replace with the path to the local directory
 OUTPUT_FILE="$8"
+PASSWORD="$9"
 REMOTE_DIRECTORY="/tmp"            # The directory on the remote host
 
 # Function to SSH into farnet1 and run a script, then exit
 ssh_into_host() {
     echo "Starting SSH into $HOST_USER@$HOST_IP..."
-    ssh $HOST_USER@$HOST_IP "bash -s" << 'EOF' &
+    sshpass -p "$PASSWORD" ssh $HOST_USER@$HOST_IP "bash -s" << 'EOF' &
     echo "Connected to host $HOST_USER@$HOST_IP..."
     cd $REMOTE_DIRECTORY && cd tcp
     pwd
