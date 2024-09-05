@@ -4,6 +4,7 @@ import subprocess
 import paramiko
 from getpass import getpass
 import time
+import getpass
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run communication benchmark tests.')
@@ -79,7 +80,7 @@ def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_ib_de
 def main():
     args = parse_arguments()
     
-    password = input("Please Enter SSH password:")
+    password = getpass.getpass("Please Enter SSH password:")
     
     communication_output_dir = os.path.join(os.path.dirname(__file__), 'output')
     create_directory(communication_output_dir)
