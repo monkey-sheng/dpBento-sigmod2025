@@ -3,14 +3,14 @@
     [
         {
             "benchmark_class": "communication",
-            "benchmark_items": ["DMA", "RDMA", "TCP"],
+            "benchmark_items": ["TCP"],
             "parameters": {
-                "data_size": [8, 16, 64, 128, 512, 1024, 2048, 4096, 8192],
-                "queue_depth": [1, 2, 4, 8, 16],
-                "threads": [1, 2, 4, 10, 20],
-                "test_rounds":[100, 1000, 10000],
-                "host_pci": "e1:00.1",
-                "dpu_pci": "03:00.1",
+                "data_size": [8],
+                "queue_depth": [1],
+                "threads": [2],
+                "test_rounds":[1000],
+                "host_ib_dev": "",
+                "dpu_ib_dev": "",
                 "host_ip": "10.70.60.11",
                 "host_username":"annali",
                 "dpu_ip": "192.168.100.2",

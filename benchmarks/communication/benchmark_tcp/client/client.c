@@ -163,7 +163,7 @@ int main(int argc, const char** argv){
     }
 
     // Output Folder
-    char *output_file = argv[7];
+    const char *output_file = argv[7];
     // End of Args
 
     // Begin Server Connection
