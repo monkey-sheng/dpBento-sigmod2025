@@ -2,7 +2,6 @@ import os
 import argparse
 import subprocess
 import shutil
-import json
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Run storage benchmark tests.')
@@ -36,28 +35,34 @@ def run_benchmark(test_name, block_size, numjobs, size, runtime, direct, iodepth
     # Ensure test_dir exists
     create_directory(test_dir)
     
-    for i in range(1, runtimes + 1):
-        temp_output_file = os.path.join(test_run_dir, f"run{i}.txt")
-        print(f"Run #{i}", file=log_file)
-        command = [
-            benchmark_item,
-            f"--name={test_name}", 
-            f"--ioengine={ioengine}", 
-            f"--rw={test_name}", 
-            f"--bs={block_size}", 
-            f"--direct={direct}", 
-            f"--size={size}", 
-            f"--numjobs={numjobs}", 
-            f"--iodepth={iodepth}", 
-            f"--runtime={runtime}", 
-            "--group_reporting", 
-            f"--directory={test_dir}", 
-            f"--output={temp_output_file}"
-        ]
-        subprocess.run(command, check=True)
-        print(f"Results saved to {temp_output_file}", file=log_file)
-        shutil.rmtree(test_dir)
-        create_directory(test_dir)
+    combined_output_file = os.path.join(test_run_dir, "combined_results.txt")
+
+    with open(combined_output_file, 'a') as combined_file:
+        for i in range(1, runtimes + 1):
+            print(f"Run #{i}", file=log_file)
+            print(f"\nRun #{i}\n{'-'*10}\n", file=combined_file)
+            
+            command = [
+                benchmark_item,
+                f"--name={test_name}", 
+                f"--ioengine={ioengine}", 
+                f"--rw={test_name}", 
+                f"--bs={block_size}", 
+                f"--direct={direct}", 
+                f"--size={size}", 
+                f"--numjobs={numjobs}", 
+                f"--iodepth={iodepth}", 
+                f"--runtime={runtime}", 
+                "--group_reporting", 
+                f"--directory={test_dir}"
+            ]
+            
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            combined_file.write(result.stdout)
+            print(f"Results appended to {combined_output_file}", file=log_file)
+            
+            shutil.rmtree(test_dir)
+            create_directory(test_dir)
 
 def main():
     args = parse_arguments()
