@@ -1,17 +1,16 @@
 import os
 import argparse
 import subprocess
-import shutil
 import json
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run memory benchmark.")
-    parser.add_argument('--test type', type=str, required=True, help='"latency" XOR "bandwidth"')
+    parser.add_argument('--test_type', type=str, required=True, help='"latency" XOR "bandwidth"')
 
-    parser.add_argument('--numThreads', type=int, default=0, help="Number of threads for bandwidth benchmark (0 for max)(ignored by latency test)")
+    parser.add_argument('--num_threads_for_seq', type=int, default=0, help="Number of threads for bandwidth benchmark (0 for max)(ignored by latency test)")
     parser.add_argument('--starting_size', type=str, required=True, help='starting size for working set')
     parser.add_argument("--ending_size", type=str, required=True, help="ending size for working set")
-    parser.add_argument("--length_multipler", type=int, default=8, help="increase test run duration, must be power of 2")
+    parser.add_argument("--test_duration_multiplier", type=int, default=8, help="increase test run duration, must be power of 2")
 
     return parser.parse_args()
 
@@ -41,6 +40,6 @@ def run_benchmark(test_name, numThreads, starting_size, ending_size, length_mult
 
 def main():
     args = parse_arguments()
-    run_benchmark(args.test_name, args.numThreads, args.starting_size, args.ending_size, args.length_multipler)
+    run_benchmark(args.test_name, args.numThreads, args.starting_size, args.ending_size, args.test_duration_multiplier)
 if __name__ == '__main__':
     main()

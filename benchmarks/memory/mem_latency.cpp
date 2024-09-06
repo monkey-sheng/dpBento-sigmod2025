@@ -101,10 +101,10 @@ int main(int argc, char** argv){
     if (size < l1_size && size * 2 > l1_size){
       run_benchmark(fout, fnull, l1_size, adjustment);
     }
-    else if (size < l2_size && size * 2 > l2_size){
+    if (size < l2_size && size * 2 > l2_size){
       run_benchmark(fout, fnull, l2_size, adjustment);
     }
-    else if (l3_size != -1 && l3_size != 0 && size < l3_size && size * 2 > l3_size) { 
+    if (l3_size != -1 && l3_size != 0 && size < l3_size && size * 2 > l3_size) { 
       run_benchmark(fout, fnull, l3_size, adjustment);
     }
     run_benchmark(fout, fnull, END_SIZE, adjustment);

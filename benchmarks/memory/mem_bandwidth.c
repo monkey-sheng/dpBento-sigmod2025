@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 
-long long int total = (long long)1024 * 1024 * 1024 * 64 * 8 ;
+long long int total = (long long)1024 * 1024 * 1024 * 64;
 
 int get_num_cpu(){
   FILE* inp = popen("lscpu", "r");
@@ -99,6 +99,48 @@ void sort_arr(int size, uint64_t arr[size]){
     }
   }
 }
+long long int log2u(long long int num) {
+  if (num == 0) { return 1; }
+  long long int pos = 0;
+  while (num > 0){
+    pos++;
+    num /= 2;
+  }
+  return pos;
+}
+long long int poweroftwo(long long int exp){
+  if (exp == 0) { return 1; }
+  long long int num = 2;
+  while (exp - 1 > 0){
+    num *= 2;
+    exp--;
+  }
+  return num;
+}
+void merge_list(long long int pow2_size, long long pow2[pow2_size], long long int merge_size, unsigned long merge_lst[merge_size]) {
+  long long int curr_pow_2 = poweroftwo(log2u(pow2[0]));
+  //long long int pow2_index = 1;
+  long long int merge_index = 0;
+  while (merge_lst[merge_index] <= pow2[0] && merge_index < merge_size){
+    merge_index++;
+  }
+  long long int i = 1;
+  for (; i < pow2_size; i++){
+    if (merge_index >= merge_size) { break; } 
+    if (merge_lst[merge_index] < curr_pow_2) {
+      pow2[i] = merge_lst[merge_index];
+      merge_index++;
+    }
+    else {
+      pow2[i] = curr_pow_2;
+      curr_pow_2 *= 2;
+    }
+  }
+  for (; i < pow2_size; i++){
+    pow2[i] = curr_pow_2;
+    curr_pow_2 *= 2;
+  }
+}
 int main(int argc, const char** argv){
   if (argc != 6){
     fprintf(stderr, "invalid arguments: must be num threads (0 for max threads), starting size (in bytes) (power of 2), ending size (in bytes) (power of 2), length multipler (power of 2), output file\n");
@@ -127,7 +169,7 @@ int main(int argc, const char** argv){
   if (strcmp(argv[3], "L1_cache") == 0) { END_SIZE = sysconf(_SC_LEVEL1_DCACHE_SIZE); }
   else if (strcmp(argv[3], "L2_cache") == 0) { END_SIZE = sysconf(_SC_LEVEL2_CACHE_SIZE); }
   else if (strcmp(argv[3], "L3_cache") == 0) { END_SIZE = sysconf(_SC_LEVEL3_CACHE_SIZE); }
-  else { END_SIZE = strtoll(argv[2], temp, 10); }
+  else { END_SIZE = strtoll(argv[3], temp, 10); }
   total = strtoll(argv[4], temp, 10) * total;
   uint64_t cache_sizes[9];
   cache_sizes[0] = sysconf(_SC_LEVEL1_DCACHE_SIZE);
@@ -152,17 +194,25 @@ int main(int argc, const char** argv){
   FILE* fnull = fopen("/dev/null", "w");
 
   fprintf(fout, "working set size (kB), Average throughput (GB/s) \n");
-
+   
   if ( START_SIZE == END_SIZE ) {
     run_benchmark(NUM_THREADS, fout, fnull, START_SIZE);
     exit(EXIT_SUCCESS);
   }
-  run_benchmark(NUM_THREADS, fout, fnull, START_SIZE);
-  check_and_run_cache(NUM_THREADS, fout, fnull, START_SIZE, sizeof(cache_sizes) / sizeof(uint64_t), cache_sizes);
-  for (long long int size = 1024; size < END_SIZE; size *= 2){
-    if (size <= START_SIZE) { continue; }
-    run_benchmark(NUM_THREADS, fout, fnull, size);
-    check_and_run_cache(NUM_THREADS, fout, fnull, size, sizeof(cache_sizes) / sizeof(uint64_t), cache_sizes);
-  }
+  long long int sizes_size = log2u(END_SIZE / START_SIZE) + 2 + 9;
+  long long int* sizes = malloc(sizes_size * sizeof(long long int));
+  sizes[0] = START_SIZE;
+  merge_list( sizes_size, sizes, 9, cache_sizes);
+  for (int i = 0; sizes[i] < END_SIZE && i < log2u(END_SIZE/ START_SIZE) + 2 + 9; i++)
+    run_benchmark(NUM_THREADS, fout, fnull, sizes[i]);
+  run_benchmark(NUM_THREADS, fout, fnull, END_SIZE);
+
+  //run_benchmark(NUM_THREADS, fout, fnull, START_SIZE);
+  //check_and_run_cache(NUM_THREADS, fout, fnull, START_SIZE, sizeof(cache_sizes) / sizeof(uint64_t), cache_sizes);
+  //for (long long int size = 1024; size < END_SIZE; size *= 2){
+  //  if (size <= START_SIZE) { continue; }
+  //  run_benchmark(NUM_THREADS, fout, fnull, size);
+  //  check_and_run_cache(NUM_THREADS, fout, fnull, size, sizeof(cache_sizes) / sizeof(uint64_t), cache_sizes);
+  //}
   exit(EXIT_SUCCESS);
 }

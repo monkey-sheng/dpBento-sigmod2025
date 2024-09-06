@@ -21,12 +21,13 @@ def gather_results() -> pd.DataFrame:
     
     all_dfs = []
     for item in ['BANDWIDTH', 'LATENCY']:
-        # Use glob to find all .csv files in the directory
-        result_paths = glob.glob(os.path.join(dir, '*.csv'))
+        # old # Use glob to find all .csv files in the directory
+        #result_paths = glob.glob(os.path.join(dir, '*.csv'))
+        result_paths = [os.path.join(dir, 'band.csv'), os.path.join(dir, 'lat.csv')]
         
         for result_csv in result_paths:
             df = pd.read_csv(result_csv)
-            df['benchmark_item'] = item
+            df['benchmark_item'] = item # should it be benchmark_item
             print(df)
             all_dfs.append(df)
 
@@ -38,8 +39,6 @@ if __name__ == '__main__':
     concat_df = gather_results()
     print(concat_df)
     if args.metrics:
-        # keep columns of dfs that are in the metrics list
-        # TODO: need to keep the other useful columns, i.e. benchmark_item, too
         metrics = json.loads(args.metrics)
         assert(isinstance(metrics, list))
         metrics.append('benchmark_item')

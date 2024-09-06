@@ -14,4 +14,6 @@ if os.path.exists(os.path.join(curr_dir, 'band.csv')):
     os.remove(os.path.join(curr_dir, 'band.csv'))
 if os.path.exists(os.path.join(curr_dir, 'band.out')):
     os.remove(os.path.join(curr_dir, 'band.out'))
+if os.path.exists(os.path.join(curr_dir, 'output.csv')):
+    os.remove(os.path.join(curr_dir, 'output.csv'))
 print("Removed all csv files for memory benchmarks")
