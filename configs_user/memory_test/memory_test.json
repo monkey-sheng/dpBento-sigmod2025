@@ -1,0 +1,31 @@
+#{
+#    "benchmark_name": "memory_test"
+#    "test_parameters": {
+#        "test_type": ["bandwidth", "latency"] 
+#        "num_threads_for_seq": [0]
+#        "starting_size": [1024]
+#        "ending_size": ["L2_cache"]
+#        "length_multiplier": [8]
+#    },
+#
+#    "dpdento_root": "/path/to/your/DPU_bench",
+#    "output_folder": "/your/path"
+#}
+{
+    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
+    
+    "benchmarks":
+    [
+        {
+            "benchmark_class": "memory",
+            "benchmark_items": ["bandwidth", "latency"],
+            "parameters": {
+              "num_threads_for_seq": [0]
+              "starting_size": [1024]
+              "ending_size": ["L2_cache"]
+              "length_multiplier": [8]
+            },
+            "metrics": ["ignore this, there are only 2 metrics per test anyways"]
+        }
+    ]
+}
