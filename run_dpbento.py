@@ -185,9 +185,14 @@ class ExperimentRunner:
             values = (v if isinstance(v, list) else [v] for v in bench_params.values())
             combinations = list(product(*values))
 
+
+            metrics_opt = f"--metrics={json.dumps(self.bench_metrics[benchmark])}"
+
             for combination in combinations:
                 params = list(zip(keys, combination))
                 opts = self.kv_list_to_opts(self.bench_items[benchmark], params)
+
+                opts.append(metrics_opt)
                 
                 self.logger.info(f"Running benchmark {benchmark} with: {' '.join(opts)}")
                 if not self.run_benchmark_script('run.py', benchmark, opts=opts):
