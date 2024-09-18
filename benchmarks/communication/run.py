@@ -43,9 +43,15 @@ def tcp_ssh_into_host_run_server_and_client(hostip, username, port, file_size, t
     command = ["bash", shell_script, username, hostip, str(port), str(file_size), str(threads), str(total_requests), file_path, output_file, password]
     subprocess.run(command, stdout=None, stderr=None, text=True)
 
-def rdma_ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, log_file, output_file):
-    pass
 
+def rdma_ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, password, host_ib_dev, dpu_ib_dev, log_file, output_file):
+    # output_file 
+    shell_script = os.path.join(os.path.dirname(__file__), "rdma.sh")
+    
+    command = ["bash", shell_script, username, hostip, str(port), str(file_size), str(threads), str(total_requests), output_file, password, host_ib_dev, dpu_ib_dev]
+    subprocess.run(command, stdout=None, stderr=None, text=True)
+
+    
 def ssh_clean_host_tcp_directory(host_username, host_ip, password, log_file):
     sh_path = os.path.join(os.path.dirname(__file__), "clean.sh")      
     # rm -rf /tmp/benchmark_tcp in host that was scp transferred to host during tcp_ssh_into_host_run_server_and_client()
@@ -57,19 +63,21 @@ def ssh_clean_host_tcp_directory(host_username, host_ip, password, log_file):
 def run_benchmark(port, data_size, queue_depth, threads, test_rounds, host_ib_dev, dpu_ib_dev, host_username, host_ip, dpu_ip, password, output_folder, log_file, log_file_path, benchmark_item):
     print(f"Running {benchmark_item} test with block_size={data_size} bytes, queue depth={queue_depth}, threads={threads}, test_rounds={test_rounds}", file=log_file)
     
-    test_run_dir = os.path.join(output_folder, benchmark_item, f"{data_size}_{queue_depth}_{threads}_{test_rounds}")
+    test_run_dir = os.path.join(output_folder, benchmark_item)
     create_directory(test_run_dir)    
     
-    temp_output_file = os.path.join(test_run_dir, f"output.csv")
     
+
     if benchmark_item == "TCP":
+        output_file = os.path.join(test_run_dir, f"output.csv")
         tcp_ssh_into_host_run_server_and_client(host_ip, host_username, port, data_size, threads, test_rounds, password, log_file_path, temp_output_file)
         
         print(f"SSH to host completed. Server on host started. Client on DPU started. File Transfer complete.", file=log_file)
-        print(f"Results saved to {temp_output_file}", file=log_file)
+        print(f"Results saved to {output_file}", file=log_file)
         
     if benchmark_item == "RDMA":
-        rdma_ssh_into_host_run_server_and_client(host_ip, host_username, port, data_size, threads, test_rounds, log_file_path, temp_output_file)
+        temp_output_file = os.path.join(test_run_dir, f"output.txt")
+        rdma_ssh_into_host_run_server_and_client(host_ip, host_username, port, data_size, threads, test_rounds, password, host_ib_dev, dpu_ib_dev, log_file_path, temp_output_file)
         
         print(f"SSH to host completed. Server on host started. Client on DPU started. File Transfer complete.", file=log_file)
         print(f"Results saved to {temp_output_file}", file=log_file)
