@@ -19,6 +19,7 @@ def parse_arguments():
     parser.add_argument('--io_engine', type=str, default="io_uring", help='I/O engine to use')
     parser.add_argument('--test_lst', type=str, default="randwrite,randread,write,read", help='Comma-separated list of tests')
     parser.add_argument('--runtimes', type=int, default=5, help='Number of runtimes')
+    parser.add_argument('--metrics', type=str, help='Metrics to collect (not used in run.py)')
     
     return parser.parse_args()
 
