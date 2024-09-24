@@ -106,6 +106,10 @@ def collect_results_float(out: str, args):
     fp.write(','.join(map(str, [args.n_workers, args.data_size, bogo_ops, ops_per_sec])) + '\n')
     fp.close()
 
+# TODO string should be out side of compute
+def collect_results_string(output, args):
+    print(f"output: {output}")
+    print(f"args: {args}")
 
 def run():
     args = parse_arguments()
@@ -113,33 +117,36 @@ def run():
     # Run the benchmark
     for item in args.benchmark_items.split(','):
         print(f"Running {item} benchmark")
-        stdout: str
+        output: str
         # pattern match against the item
         if item == 'matrix':
-            stdout = subprocess.run(
+            output = subprocess.run(
                 f"stress-ng --metrics --matrix {args.n_workers} --matrix-size {args.data_size} -t {args.running_time}s",
                 check=True, capture_output=True, shell=True, text=True).stderr
-            collect_results_matrix(stdout, args)
+            collect_results_matrix(output, args)
         elif item == 'int':
             if args.data_size in TYPE_SIZE:
                 method = f"int{args.data_size}"
             else:
                 print(f"Invalid data size {args.data_size} for int benchmark, requires one of {TYPE_SIZE}")
                 exit(-1)
-            stdout = subprocess.run(
+            output = subprocess.run(
                 f"stress-ng --metrics --cpu {args.n_workers} --cpu-method {method} -t {args.running_time}s",
                 check=True, capture_output=True, shell=True, text=True).stderr
-            collect_results_int(stdout, args)
+            collect_results_int(output, args)
         elif item == 'float':
             if args.data_size in TYPE_SIZE:
                 method = f"float{args.data_size}"
             else:
                 print(f"Invalid data size {args.data_size} for float benchmark, requires one of {TYPE_SIZE}")
                 exit(-1)
-            stdout = subprocess.run(
+            output = subprocess.run(
                 f"stress-ng --metrics --cpu {args.n_workers} --cpu-method {method} -t {args.running_time}s",
                 check=True, capture_output=True, shell=True, text=True).stderr
-            collect_results_float(stdout, args)
+            collect_results_float(output, args)
+        elif item == 'string':
+            output = subprocess.run(f"./string", check=True, capture_output=True, shell=True, text=True).stdout
+            collect_results_string(output, args)
         else:
             print(f"Invalid benchmark item {item}, requires one of {VALID_BENCHMARK_ITEMS}")
             exit(-1)
