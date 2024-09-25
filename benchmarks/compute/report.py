@@ -52,5 +52,8 @@ if __name__ == '__main__':
     print(concat_df)
 
     # write the aggregated results to a csv file
-    concat_df.to_csv(os.path.join(os.path.dirname(__file__), 'output.csv'), index=False)
+    # directory is two levels up from the current file
+    # make directory if it doesn't exist
+    os.makedirs(os.path.join(os.path.dirname(__file__), '../../output/'), exist_ok=True)
+    concat_df.to_csv(os.path.join(os.path.dirname(__file__), '../../output/', 'output.csv'), index=False)
     
