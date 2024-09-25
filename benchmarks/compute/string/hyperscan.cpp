@@ -117,7 +117,9 @@ int main(int argc, char *argv[]) {
     }
 
     char *pattern = argv[1];
+    // char *pattern = "([A-Z]| )+?COPPER";
     char *inputFN = argv[2];
+    printf("Pattern: %s\n", pattern);
 
     /* First, we attempt to compile the pattern provided on the command line.
      * We assume 'DOTALL' semantics, meaning that the '.' meta-character will
@@ -127,7 +129,7 @@ int main(int argc, char *argv[]) {
      */
     hs_database_t *database;
     hs_compile_error_t *compile_err;
-    if (hs_compile(pattern, HS_FLAG_DOTALL, HS_MODE_BLOCK, NULL, &database,
+    if (hs_compile(pattern, 0, HS_MODE_BLOCK, NULL, &database,
                    &compile_err) != HS_SUCCESS) {
         fprintf(stderr, "ERROR: Unable to compile pattern \"%s\": %s\n",
                 pattern, compile_err->message);
@@ -182,7 +184,8 @@ int main(int argc, char *argv[]) {
     }
     end_time = high_resolution_clock::now();
     regex_duration += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
-    printf("duration: %ld", regex_duration.count() / 1000);
+    printf("matches: %u\n", matches);
+    printf("duration: %ld\n", regex_duration.count() / 1000);
 
     /* Scanning is complete, any matches have been handled, so now we just
      * clean up and exit.
