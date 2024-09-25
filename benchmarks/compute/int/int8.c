@@ -6,10 +6,10 @@
 
 #define LOOP_TIMES 100000000
 
-#define TYPE double
+#define TYPE u_int8_t
 
 #pragma GCC push_options
-#pragma GCC optimize ("O0")
+// #pragma GCC optimize ("O0")
 static int _add() {
     unsigned int i;
 	double t;

@@ -6,7 +6,7 @@
 
 #define LOOP_TIMES 100000000
 
-#define TYPE double
+#define TYPE float
 
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
