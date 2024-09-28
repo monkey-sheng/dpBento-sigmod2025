@@ -18,7 +18,7 @@ def drop_caches():
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
 
-class E2ERunner(Runner):
+class RDBRunner(Runner):
     def run_benchmark_test(self, scale_factors, query, execution_mode, output_dir):
         for benchmark_item in self.args.benchmark_items.split(','):
             results = []
@@ -72,10 +72,10 @@ class E2ERunner(Runner):
         # Calculate average run time for all queries
         results_df = pd.DataFrame(results)
 
-        results_csv_path = os.path.join(output_dir, 'e2e_result.csv')
+        results_csv_path = os.path.join(output_dir, 'rdb_result.csv')
         # Check if the file already exists and append if it does
         if os.path.exists(results_csv_path):
             existing_df = pd.read_csv(results_csv_path)
             results_df = pd.concat([existing_df, results_df], ignore_index=True)
         results_df.to_csv(results_csv_path, index=False)
-        print(f"Running E2E benchmark for {benchmark_item} with scale factors {scale_factors}, query {query}, execution mode {execution_mode}")
+        print(f"Running RDB benchmark for {benchmark_item} with scale factors {scale_factors}, query {query}, execution mode {execution_mode}")
