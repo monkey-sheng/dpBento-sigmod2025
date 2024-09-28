@@ -1,3 +1,28 @@
+/**
+ * @file client.c
+ * @brief A multithreaded client program for sending files over a TCP connection to a server, 
+ *        measuring latency, and calculating throughput or latency metrics.
+ *
+ * This program connects to a server, sends files in chunks using multiple threads,
+ * and records the latency for each file transfer. The results are written to an output file
+ * and can include throughput or various latency statistics based on user selection.
+ *
+ * Usage:
+ *     client <server_ip> <server_port> <block_size> <num_threads> <total_requests> <output_file> <metric>
+ *
+ * Example:
+ *     client 127.0.0.1 8080 4096 4 10000 results.csv latency
+ *
+ * Arguments:
+ *     server_ip        - IP address of the server to connect to.
+ *     server_port      - Port of the server.
+ *     block_size       - Size of the file to send in bytes.
+ *     num_threads      - Number of threads to use for sending files.
+ *     total_requests   - Total number of file send requests across all threads.
+ *     output_file      - Path to the output file for writing the results.
+ *     metric           - Type of measurement to record: "latency" or "throughput".
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -7,18 +32,10 @@
 #include <time.h>
 #include <pthread.h>
 #include "latency_helpers.h"
+#include "client.h"
 
-#define PAGE_SIZE 4096 // 4 kB
+#define PAGE_SIZE 4096
 #define BILLION  1000000000L
-
-struct thread_args {
-    int sockfd;
-    int file_size;
-    char *buffer;
-    int requests_per_thread;
-    double *latencies;
-    int thread_index;
-};
 
 int connect_to_server(const char* server_ip, int port){
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -54,7 +71,6 @@ int validate_success_message(int sock) {
 }
 
 int send_file(int sock, int file_size, char *buffer) {
-    // Send file data
     long bytes_to_send;
     int total_bytes_sent = 0;
     int bytes_sent;
@@ -92,6 +108,11 @@ void *send_files(void *args){
     int result;
     int start_index = targs->thread_index * targs->requests_per_thread;
 
+    if (targs->sockfd < 0) {
+        printf("Invalid socket for thread %d\n", targs->thread_index);
+        return NULL;
+    }
+
     for(int i = 0; i < targs->requests_per_thread; i++){
         if(clock_gettime(CLOCK_REALTIME, &start) < 0){
             printf("clock get start time error");
@@ -119,7 +140,7 @@ void *send_files(void *args){
 
 int main(int argc, const char** argv){
     
-    if (argc != 8){
+    if (argc != 9){
         fprintf(stderr, "invalid arguments: must be server ip, server port, block size, number of threads, total requests\n");
         exit(1);
     }
@@ -164,9 +185,15 @@ int main(int argc, const char** argv){
 
     // Output Folder
     const char *output_file = argv[7];
-    // End of Args
 
-    // Begin Server Connection
+    // Metric 
+    int isBW = strtol(argv[8], &endptr, 10);
+    if (*endptr != '\0') {
+        fprintf(stderr, "Invalid total_requests: %s\n", argv[8]);
+        return EXIT_FAILURE;
+    }
+
+    // End of Args
 
     char *buffer;
     pthread_t threads[num_threads];
@@ -231,7 +258,8 @@ int main(int argc, const char** argv){
         total_latency += latencies[i];
     }
     
-    FILE *fp = fopen(output_file, "a"); // Open the file for writing
+    // Open the file for writing
+    FILE *fp = fopen(output_file, "a");
     if (fp == NULL) {
         perror("Failed to open file");
         return -1;
@@ -240,75 +268,79 @@ int main(int argc, const char** argv){
 	Statistics LatencyStats;
 	Percentiles PercentileStats;
 	GetStatistics(latencies, (size_t)total_requests, &LatencyStats, &PercentileStats);
-	// fprintf(fp, 
-	// 	"Result for %d requests of %ld bytes (%.2lf microseconds, %d threads):\nRPS, %.2lf\nStdErr, %.2lf\n", 
-	// 	total_requests,
-	// 	(long) file_size,
-	// 	(total_latency),
-    //     num_threads,
-	// 	((size_t)total_requests / total_latency * 1000000),
-	// 	LatencyStats.StandardError
-	// );
 
-    fseek(fp, 0, SEEK_END); // Move to the end of the file
-    if (ftell(fp) == 0) {   // If the file size is 0, it's empty
+    // Move to the end of the file
+    fseek(fp, 0, SEEK_END);
+    if (ftell(fp) == 0 && isBW) {
+        fprintf(fp, "requests, bytes, threads, RPS, StdErr, Min, Max, Avg, 50th, 90th, 99th, 99.9th, 99.99th, throughput(Mbps)\n");
+    } else if (ftell(fp) == 0 && !isBW){
         fprintf(fp, "requests, bytes, threads, RPS, StdErr, Min, Max, Avg, 50th, 90th, 99th, 99.9th, 99.99th\n");
     }
 
-	switch (target_metric) {
-        case 1:
-            // fprintf(fp, "Min, %.2lf\nMax, %.2lf\nAvg, %.2f\n50th, %.2lf\n90th, %.2lf\n99th, %.2lf\n99.9th, %.2lf\n99.99th, %.2lf\n",
-            //        LatencyStats.Min,
-            //        LatencyStats.Max,
-            //        total_latency/total_requests,
-            //        PercentileStats.P50,
-            //        PercentileStats.P90,
-            //        PercentileStats.P99,
-            //        PercentileStats.P99p9,
-            //        PercentileStats.P99p99);
-            fprintf(fp,  "%d, %d, %d, %.2lf, %.2lf, %.2lf, %.2lf, %.2f, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf\n",
-                    total_requests,
-                    file_size,
-                     num_threads,
-                     ((size_t)total_requests / total_latency * 1000000),
-		            LatencyStats.StandardError,
-                    LatencyStats.Min,
-                    LatencyStats.Max,
-                    total_latency/total_requests,
-                    PercentileStats.P50,
-                    PercentileStats.P90,
-                    PercentileStats.P99,
-                    PercentileStats.P99p9,
-                    PercentileStats.P99p99);
-            break;
-        case 2:
-            fprintf(fp, "Min: %.2lf\n", LatencyStats.Min);
-            break;
-        case 3:
-            fprintf(fp, "Max: %.2lf\n", LatencyStats.Max);
-            break;
-        case 4:
-            fprintf(fp, "Avg: %.2f\n", total_latency/total_requests);
-            break;
-        case 5:
-            fprintf(fp, "50th: %.2lf\n", PercentileStats.P50);
-            break;
-        case 6:
-            fprintf(fp, "90th: %.2lf\n", PercentileStats.P90);
-            break;
-        case 7:
-            fprintf(fp, "99th: %.2lf\n", PercentileStats.P99);
-            break;
-        case 8:
-            fprintf(fp, "99.9th: %.2lf\n", PercentileStats.P99p9);
-            break;
-        case 9:
-            fprintf(fp, "99.99th: %.2lf\n", PercentileStats.P99p99);
-            break;
-        default:
-            fprintf(fp, "Invalid target metric.\n");
-            break;
+    if (isBW) {
+        switch (target_metric) {
+            case 1:
+                fprintf(fp,  "%d, %d, %d, %.2lf, %.2lf, %.2lf, %.2lf, %.2f, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf\n",
+                        total_requests,
+                        file_size,
+                        num_threads,
+                        ((size_t)total_requests / total_latency * 1000000),
+                        LatencyStats.StandardError,
+                        LatencyStats.Min,
+                        LatencyStats.Max,
+                        total_latency/total_requests,
+                        PercentileStats.P50,
+                        PercentileStats.P90,
+                        PercentileStats.P99,
+                        PercentileStats.P99p9,
+                        PercentileStats.P99p99,
+                        (8 * file_size * 1000000)/ (total_latency/total_requests));
+                break;
+            case 2:
+                fprintf(fp, "Min: %.2lf\n", LatencyStats.Min);
+                break;
+            case 3:
+                fprintf(fp, "Max: %.2lf\n", LatencyStats.Max);
+                break;
+            case 4:
+                fprintf(fp, "Avg: %.2f\n", total_latency/total_requests);
+                break;
+            case 5:
+                fprintf(fp, "50th: %.2lf\n", PercentileStats.P50);
+                break;
+            case 6:
+                fprintf(fp, "90th: %.2lf\n", PercentileStats.P90);
+                break;
+            case 7:
+                fprintf(fp, "99th: %.2lf\n", PercentileStats.P99);
+                break;
+            case 8:
+                fprintf(fp, "99.9th: %.2lf\n", PercentileStats.P99p9);
+                break;
+            case 9:
+                fprintf(fp, "99.99th: %.2lf\n", PercentileStats.P99p99);
+                break;
+            default:
+                fprintf(fp, "Invalid target metric.\n");
+                break;
+        }
+    } else {
+        fprintf(fp,  "%d, %d, %d, %.2lf, %.2lf, %.2lf, %.2lf, %.2f, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf\n",
+                        total_requests,
+                        file_size,
+                        num_threads,
+                        ((size_t)total_requests / total_latency * 1000000),
+                        LatencyStats.StandardError,
+                        LatencyStats.Min,
+                        LatencyStats.Max,
+                        total_latency/total_requests,
+                        PercentileStats.P50,
+                        PercentileStats.P90,
+                        PercentileStats.P99,
+                        PercentileStats.P99p9,
+                        PercentileStats.P99p99);
     }
+
     fclose(fp);
 	free(latencies);
     return 0;

@@ -10,7 +10,9 @@ TOTAL_REQUESTS="$6"
 LOCAL_DIRECTORY="$7"  # Replace with the path to the local directory
 OUTPUT_FILE="$8"
 PASSWORD="$9"
+isBW="{$10}"
 REMOTE_DIRECTORY="/tmp"            # The directory on the remote host
+
 
 # Function to SSH into farnet1 and run a script, then exit
 ssh_into_host() {
@@ -44,7 +46,7 @@ cd $LOCAL_DIRECTORY
 echo pwd
 cd client || { echo "Directory client not found"; exit 1; }
 gcc -o client client.c || { echo "Compilation failed"; exit 1; }
-./client $HOST_IP $PORT $FILE_SIZE $THREADS 1 $TOTAL_REQUESTS $OUTPUT_FILE
+./client $HOST_IP $PORT $FILE_SIZE $THREADS 1 $TOTAL_REQUESTS $OUTPUT_FILE $isBW
 # HOST_IP, PORT, FILE_SIZE, THREADS, TARGET_METRIC (1 defaults to everything), TOTAL_REQUESTS
 
 echo "Client run completed."

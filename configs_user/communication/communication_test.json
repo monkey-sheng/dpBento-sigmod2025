@@ -3,11 +3,11 @@
     [
         {
             "benchmark_class": "communication",
-            "benchmark_items": ["TCP"],
+            "benchmark_items": ["TCP", "RDMA"],
             "parameters": {
                 "data_size": [8],
                 "queue_depth": [1],
-                "threads": [2],
+                "threads": [1],
                 "test_rounds":[1000],
                 "host_ib_dev": "",
                 "dpu_ib_dev": "",
@@ -16,7 +16,7 @@
                 "dpu_ip": "192.168.100.2",
                 "port": "8080"
             },
-            "metrics": ["latency", "throughput"]
+            "metrics": ["latency", "bandwidth"]
         }
     ]
 }

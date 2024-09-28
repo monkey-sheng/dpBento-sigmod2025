@@ -70,18 +70,18 @@ int receive_file(int client_sock, int total_requests) {
     struct timespec start, end;
     int64_t elapsed_time_ns = 0;
 
-    long file_size = 0;
+    int file_size = 0;
     if (read(client_sock, &file_size, sizeof(file_size)) < 0) {
         perror("Failed to read file size");
         return -1;
     }
 
     if (file_size < 8 || file_size > MAX_FILE_SIZE) {
-        printf("file size %ld\n", file_size);
+        printf("file size %d\n", file_size);
         fprintf(stderr, "Received file size is out of the expected range (1kB to 1024kB)\n");
         return -1;
     }
-    printf("Received file size: %ld\n", file_size);
+    printf("Received file size: %d\n", file_size);
     
     char* buffer = malloc(PAGE_SIZE);
     if (!buffer) {
@@ -90,7 +90,7 @@ int receive_file(int client_sock, int total_requests) {
     }
 
     for(int i = 1; i <= total_requests; ++i){
-        long total_bytes_received = 0;
+        int total_bytes_received = 0;
         int bytes_received = 0;
         while(total_bytes_received < file_size){
             bytes_received = read(client_sock, buffer, PAGE_SIZE);
