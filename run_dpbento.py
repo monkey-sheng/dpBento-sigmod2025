@@ -88,7 +88,7 @@ class ExperimentRunner:
             raise PermissionError(f"Cannot access benchmark directory '{self.benchmarks_dir}'. Please check your permissions.")
         self.logger.info(f"Benchmark directory and permissions verified.")
 
-    def run_benchmark_script(self, script_name: str, benchmark: str, opts: list):
+    def run_benchmark_script(self, script_name: str, benchmark: str, opts: list=[]):
             script_path = os.path.join(benchmark, script_name)
             commands = ['python3', script_path] + opts
             try:
@@ -110,7 +110,7 @@ class ExperimentRunner:
         '''
         # NOTE: right now it params, metrics and hints are shared across items in the same class, let's still
         # store them in the dictionaries with its own item path as the key
-        def add_bench_item_if_ok(item_path: str, bench_items: list, bench_params: dict, metrics: list[str], hints: dict):
+        def add_bench_item_if_ok(item_path: str, bench_items: list, bench_params: dict, metrics: list, hints: dict):
             '''
             Add benchmark items (paths) to the list of benchmarks to run,
             and add parameters from the user config to the `bench_params` dictionary where the key is the item path,
