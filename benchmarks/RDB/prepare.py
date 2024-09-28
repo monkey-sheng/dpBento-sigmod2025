@@ -12,9 +12,6 @@ def install_packages():
     # Update package list
     run_command(['sudo', 'apt', 'update'])
 
-    # Install system packages
-    run_command(['sudo', 'apt', 'install', '-y', 'python3-pandas', 'python3-matplotlib', 'python3-numpy'])
-
     # Install Python packages globally using pip
     run_command(['sudo', 'pip3', 'install', 'pandas', 'matplotlib', 'numpy', 'duckdb'])
 
@@ -22,3 +19,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     install_packages()
     logging.info("Global setup complete.")
+    

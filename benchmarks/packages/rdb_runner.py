@@ -72,7 +72,7 @@ class RDBRunner(Runner):
         # Calculate average run time for all queries
         results_df = pd.DataFrame(results)
 
-        results_csv_path = os.path.join(output_dir, 'rdb_result.csv')
+        results_csv_path = os.path.join(output_dir, 'trivial.csv')
         # Check if the file already exists and append if it does
         if os.path.exists(results_csv_path):
             existing_df = pd.read_csv(results_csv_path)
