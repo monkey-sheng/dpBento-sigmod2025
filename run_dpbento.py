@@ -88,7 +88,7 @@ class ExperimentRunner:
             raise PermissionError(f"Cannot access benchmark directory '{self.benchmarks_dir}'. Please check your permissions.")
         self.logger.info(f"Benchmark directory and permissions verified.")
 
-    def run_benchmark_script(self, script_name: str, benchmark: str, opts: list[str] = []):
+    def run_benchmark_script(self, script_name: str, benchmark: str, opts: list):
             script_path = os.path.join(benchmark, script_name)
             commands = ['python3', script_path] + opts
             try:
