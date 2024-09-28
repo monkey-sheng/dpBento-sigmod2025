@@ -5,104 +5,86 @@ Uses standard Python as the driver program without any extra package dependencie
 
 ## Development environment setup
 
-Install this as a pip package. First go to the root directory `cd dpbento`, then
+Assumption: Python version 3.9 or newer is being used.
 
-```
-pip -e install .
-```
 
-The base is at `benchmark_base.py`, take a look at the mock example at `compute/`, how it's structured and especially `decompress_bf2soc.py` for a concrete example. Also, for identical or highly similar benchmarks, we can probably piggyback off of just one, for example take a look at `decompress_bf3soc.py`
+## Experiment Configuration Guide (Developer)
 
-## Extension guide
+<img src="https://github.com/user-attachments/assets/05cec789-5519-4c1a-8534-fdf84fb294f9" width="50%">
 
-DP-Bento will come with a set of prebuilt "bento boxes" of benchmarks, in 6 categories:
+Refer to the `/configs_user/*` directory in the example folder to customize the experiment configuration.
 
-- compute
-- memory
-- data movement (including network)
-- storage
-- hardware accelerators
-- end-to-end apps
+### Adding a New Configuration Directory
 
-DP-Bento will also allow the use of external user supplied "bento boxes" of benchmarks, for flexibility and extensibility. //TODO: this is still WIP
-   ## How to configure the Json file as Dpu benchmark input(storage_test) 
-  
-   Check the example `/configs_user/customize_test.json` file and customize the experiment. 
-  
-   Sample JSON File 
-  ``` 
-  { 
-   "benchmark_name": "storage_test", 
-   "test_parameters": { 
-   "numjobs": [4], 
-   "block_sizes": ["1m", "2m", "4m", "8m", "16m", "32m"], 
-   "size": ["1G"], 
-   "runtime": ["30s"], 
-   "direct": [1], 
-   "iodepth": [32], 
-   "io_engine": ["io_ring"], 
-   "test_lst": ["randwrite", "randread", "write", "read"] 
-   }, 
-   "dpdento_root": "/path/to/your/DPU_bench", 
-   "output_folder": "/path/to/your/output_folder" 
-  } 
-  ``` 
-  ### Step 1: Define Benchmark Name 
-  
-   Enter the name of the benchmark test in the `benchmark_name` field. 
-  
-   `"benchmark_name": "storage_test"` 
-  
-   ### Step 2: Set Test Parameters 
-  In the `test_parameters` field, define the various test parameters. Parameters include: 
-  
-   - **
+You can create your own configuration directories as needed. For instance, if you want to add a new configuration directory called `compression`, you can create the following path:
+`/configs_user/compression/compression_test.json`
 
-## How to configure the Json file as Dpu benchmark input(end_to_end_test)
+### Designing `compression_test.json`
 
-Check the example `/configs_user/customize_test.json` file and customize the experiment.
+Additionally, you will need to design the `compression_test.json` file. Below is a sample configuration:
 
-Sample JSON File
+Define your own parameters and metrics based on the specific needs of your experiment
 
 ```
 {
-    "benchmark_name": "e2e_test",
-    "test_parameters": {
-        "scale_factors": [1, 3, 10],
-        "query_numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-    },
-    "dpdento_root": "/path/to/your/DPU_bench",
-    "output_folder": "/path/to/your/output_folder"
+    "benchmarks": [
+        {
+            "benchmark_class": "compression",
+            "benchmark_items": ["Specify the tool you intend to use"],
+            "parameters": {
+                "algorithm": [algo],
+                "seconds": [3,5,10],
+                "bytes": [4,8],
+                "multi": [2],
+                "async_jobs": [4],
+                "misalign": [0]
+            },
+            "metrics": [A,B,C]
+        }
+    ]
 }
 ```
+## Create Benchmark `compression`
 
-### Step 1: Define Benchmark Name
+Create a new directory named `compression` (ensure that the directory name matches the `benchmark_class` field in your JSON file).
 
-Enter the name of the benchmark test in the `benchmark_name` field.
+There are four scripts you need to create in this directory: `prepare.py`, `report.py`, `run.py`, and `clean.py`.
 
-`"benchmark_name": "e2e_test"`
+### `prepare.py`
 
-### Step 2: Set Test Parameters
+This script is responsible for installing all dependencies and performing necessary configurations for the benchmark.
 
-[](https://github.com/fardatalab/DPU-bench/tree/Chihan_Storage_test#step-2-set-test-parameters)
+### `run.py`
 
-In the `test_parameters` field, define the various test parameters. Parameters include:
+This script receives commands from `run_dpbento.py`. The `run_dpbento.py` script will pass the arguments for the Cartesian product of the parameters defined in your JSON file's `parameters` field. However, the `metrics` field will not be included in this Cartesian product.
 
-* **scale_factors** : Define a list of different scale factors. Possible values are any positive integers.
-* **query_numbers** : Define a list of different query numbers. Possible values are any integers between 1 and 22.
+For example, based on the JSON file provided earlier, `run.py` will receive the following commands invoked by `run_dpbento.py`:
 
-Enter the root directory path for the DPU benchmark in the `dpdento_root` field, and the output folder path in the `output_folder` field. For example:
 
-`"dpdento_root": "/path/to/your/DPU_bench"`,
+```
+run.py --algorithm [algo] --seconds [3] --bytes [4] --muti[2] --async_jobs[4] --msalign[0] --metrics[A,B,C]
+ run.py --algorithm [algo] --seconds [5] --bytes [4] --muti[2] --async_jobs[4] --msalign[0] --metrics[A,B,C]
+ run.py --algorithm [algo] --seconds [10] --bytes [4] --muti[2] --async_jobs[4] --msalign[0] --metrics[A,B,C]
+ run.py --algorithm [algo] --seconds [3] --bytes [8] --muti[2] --async_jobs[4] --msalign[0] --metrics[A,B,C]
+ run.py --algorithm [algo] --seconds [5] --bytes [8] --muti[2] --async_jobs[4] --msalign[0] --metrics[A,B,C]
+ run.py --algorithm [algo] --seconds [10] --bytes [8] --muti[2] --async_jobs[4] --msalign[0] --metrics[A,B,C]
+```
 
-`"output_folder": "/path/to/your/output_folder"`
+Ensure that your `run.py` script is equipped to handle these commands and their respective arguments.
 
-## How to Run the customize experiment by DPU-bench `cd DPU-bench`
+### `report.py`
 
-The `setup` script will install all dependencies and packages that we need
+This script will receive the `metrics` passed from `run_dpbento.py` and generate an `output.csv` file under your benchmark directory, capturing the results of the run.
 
-`python setup.py`
+### `clean.py`
 
-Assumption: User already configure the `/configs_user/customize_test.json` file.
+When the user executes the command:
+`python3 run_dpbento.py --config /configs_user/compression/compression_test.json --clean`
 
-`python3 run_dpbento.py`
+
+This script will remove all dependencies installed during the preparation phase and delete any intermediate files generated during the benchmark.
+
+## Run Benchmark `compression`
+
+`python3 run_dpbento.py --config /configs_user/compression/compression_test.json`
+
