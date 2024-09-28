@@ -7,7 +7,7 @@
 #include <sys/time.h>
 
 /* Stub function that links to zlib-ng's decompress function */
-extern void* decompress_with_SIMD(void* arg){
+void* decompress_with_SIMD(void* arg){
   struct decompress_args args = *((struct decompress_args*) (arg));
   
   struct timeval decompress_time_start;

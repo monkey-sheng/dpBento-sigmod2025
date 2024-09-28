@@ -10,9 +10,9 @@
 #include <stdbool.h>
 #include "run.h"
 //#include "structs.c"
-#include "decompress_with_simd.c"
-#include "decompress_without_simd.c"
-#include "decompres_with_doca.c"
+#include "decompress_with_simd.h"
+#include "decompress_without_simd.h"
+#include "decompress_with_doca.h"
 
 // For now, we make each thread run the same commpression job
 
