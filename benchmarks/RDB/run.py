@@ -12,6 +12,5 @@ from benchmarks.packages.rdb_runner import RDBRunner
 if __name__ == '__main__':
     rdb_parser = RDBParser()
     args = rdb_parser.parse_arguments()
-    
     rdb_runner = RDBRunner(args)
-    rdb_runner.run_benchmark_test(args.scale_factors, args.query, args.execution_mode, rdb_runner.output_dir)
+    rdb_runner.run_benchmark_test(args.scale_factors, args.query, args.execution_mode)
