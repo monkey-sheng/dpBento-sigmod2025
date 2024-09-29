@@ -1,0 +1,17 @@
+{
+    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
+    
+    "benchmarks":
+    [
+        {
+            "benchmark_class": "memory",
+            "benchmark_items": ["bandwidth", "latency"],
+            "parameters": {
+              "num_threads_for_seq": [0],
+              "starting_size": [1024],
+              "ending_size": ["L2_cache"],
+              "test_duration_multiplier": [8]
+            }
+        }
+    ]
+}

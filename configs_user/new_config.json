@@ -41,16 +41,17 @@
             "benchmark_class": "communication",
             "benchmark_items": ["DMA", "RDMA", "TCP"],
             "parameters": {
-                "data_size": [1024, 4096],
-                "queue_depth": 1,  // the code currently allows scalar values, or lists
-                "batch_size": [1, 2, 4, 8, 16, 32],
+                "data_size": [8, 16, 64, 128, 512, 1024, 2048, 4096, 8192],
+                "queue_depth": [1, 2, 4, 8, 16],  // the code currently allows scalar values, or lists
+                "number_of_threads": [1, 2, 4, 10, 20],
                 // IP addr doesn't apply to DMA, the DMA benchmark item script will still receive these,
                 // but during argparsing it should ignore them, i.e. `parse_known_args()` should be used
+                "test_rounds":[100, 1000, 10000],
+                "host_pci": "e1:00.1",
                 "host_ip": "10.10.1.2",
-                "dpu_ip": "10.10.1.42",
-                "something_else": []
+                "dpu_ip": "10.10.1.42"
             },
-            "metrics": ["latency", "throughput", "something else"],
+            "metrics": ["latency", "throughput"],
 
             // hints is needed to produce the plot for each benchmark item
             "report_hints": {

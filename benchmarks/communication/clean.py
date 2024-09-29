@@ -46,11 +46,9 @@ def main():
     remove_directory(output_path)
 
     # Uninstall packages
-    remove_package('fio')
     remove_package('python3-pip')
 
     # Purge packages
-    purge_package('fio')
     purge_package('python3-pip')
 
     # Remove any unused dependencies
@@ -58,7 +56,7 @@ def main():
 
     # Clean up package cache
     clean_package_cache()
-
+    
     logging.info("Cleanup complete. All installed packages have been removed.")
 
 if __name__ == "__main__":

@@ -1,0 +1,23 @@
+{
+    "benchmarks": [
+        {
+            "benchmark_class": "RDB",
+            "description": "Benchmarking for Relational Database systems",
+
+            "benchmark_items": ["duckdb"],
+            "notes": "DuckDB is the database being benchmarked",
+
+            "parameters": {
+                "scale_factors": [1],
+                "scale_factors_description": "Different data sizes used for benchmarking",
+
+                "query": [1],
+                "query_description": "List of TPC-H queries to be executed",
+
+                "execution_mode": ["hot"],
+                "execution_mode_description": "Cold means no caching, hot means using cache"
+            },
+            "metrics": ["run_time"]
+        }
+    ]
+}

@@ -28,9 +28,6 @@ def main():
     # Update package list
     run_command(['sudo', 'apt', 'update'])
 
-    # Install fio
-    run_command(['sudo', 'apt', 'install', '-y', 'fio'])
-
     # Install python3-pip
     run_command(['sudo', 'apt', 'install', '-y', 'python3-pip'])
 
