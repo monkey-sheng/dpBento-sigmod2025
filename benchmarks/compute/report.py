@@ -37,20 +37,23 @@ def gather_results() -> pd.DataFrame:
 
 if __name__ == '__main__':
     args = parse_arguments()
-    concat_df = gather_results()
-    print(concat_df)
-    if args.metrics:
-        # keep columns of dfs that are in the metrics list
-        # TODO: need to keep the other useful columns, i.e. benchmark_item, too
-        metrics = json.loads(args.metrics)
-        assert(isinstance(metrics, list))
-        metrics.append('benchmark_item')
-        print('metrics to keep:', metrics)
-        concat_df = concat_df[metrics]
+    # concat_df = gather_results()
+    # print(concat_df)
+    # if args.metrics:
+    #     # keep columns of dfs that are in the metrics list
+    #     # TODO: need to keep the other useful columns, i.e. benchmark_item, too
+    #     metrics = json.loads(args.metrics)
+    #     assert(isinstance(metrics, list))
+    #     metrics.append('benchmark_item')
+    #     print('metrics to keep:', metrics)
+    #     concat_df = concat_df[metrics]
 
-    print('after keeping only the specified metrics:')
-    print(concat_df)
+    # print('after keeping only the specified metrics:')
+    # print(concat_df)
 
-    # write the aggregated results to a csv file
-    concat_df.to_csv(os.path.join(os.path.dirname(__file__), 'output.csv'), index=False)
+    # # write the aggregated results to a csv file
+    # # directory is two levels up from the current file
+    # # make directory if it doesn't exist
+    # os.makedirs(os.path.join(os.path.dirname(__file__), '../../output/'), exist_ok=True)
+    # concat_df.to_csv(os.path.join(os.path.dirname(__file__), '../../output/', 'output.csv'), index=False)
     

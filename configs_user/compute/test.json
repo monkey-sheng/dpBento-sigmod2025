@@ -5,14 +5,11 @@
     [
         {
             "benchmark_class": "compute",
-            "benchmark_items": ["matrix", "int"],
+            "benchmark_items": ["fp", "int"],
             "parameters": {
-                "data_size": [16, 64],
-                "matrix_size": [16, 256],
-                "n_workers": [1],
-                "running_time": 1
+                "data_type": "int32,double,fp32"
             },
-            "metrics": ["matrix_size", "data_size", "ops/s"]
+            "metrics": ["data_type", "op_type", "ops/s"]
         }
     ]
 }

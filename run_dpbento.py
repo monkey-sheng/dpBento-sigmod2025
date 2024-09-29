@@ -4,6 +4,7 @@ import subprocess
 from itertools import product
 import argparse
 import logging
+from typing import List
 
 # These scripts need to be executable in the benchmark item directory
 BENCH_ITEM_SCRIPTS = ['prepare.py', 'run.py', 'report.py', 'clean.py']
