@@ -26,7 +26,18 @@ class RDBRunner(Runner):
         current_dir = os.path.dirname(__file__)
         parent_dir = os.path.dirname(current_dir)
         self.output_dir = os.path.join(parent_dir, 'RDB', 'output')
+        if not os.path.exists(self.output_dir):
+            try:
+                os.makedirs(self.output_dir, exist_ok=True)
+                print(f"Created output directory: {self.output_dir}")
+            except OSError as error:
+                print(f"Failed to create directory {self.output_dir}: {error}")
+            else:
+                print(f"Directory {self.output_dir} is ready to use.")
+        else:
+            print(f"Directory {self.output_dir} already exists.")
 
+        
     def run_benchmark_test(self, scale_factors, query, execution_mode):
         for benchmark_item in self.args.benchmark_items.split(','):
             results = []
