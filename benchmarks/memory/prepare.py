@@ -14,11 +14,11 @@ def main():
 
     # Get the directory of the prepare.py script
     benchmark_dir = os.path.dirname(os.path.abspath(__file__))
-    print(benchmark_dir)
+    #print(benchmark_dir)
     logging.info(f"benchmark directory: {benchmark_dir}")
 
-    run_command(['gcc', '-O2', benchmark_dir + '/mem_bandwidth.c', '-o', 'band.out'])
-    run_command(['g++', '-O2', benchmark_dir + '/mem_latency.cpp', '-o', 'lat.out'])
+    run_command(['gcc', '-O2', benchmark_dir + '/mem_bandwidth.c', '-o', benchmark_dir + '/band.out'])
+    run_command(['g++', '-O2', benchmark_dir + '/mem_latency.cpp', '-o', benchmark_dir + '/lat.out'])
     
     logging.info("Setup complete")
 

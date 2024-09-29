@@ -88,7 +88,7 @@ int main(int argc, char** argv){
   long long l3_size = sysconf(_SC_LEVEL3_CACHE_SIZE);
   FILE* fout = fopen(argv[4], "w");
   FILE* fnull = fopen("/dev/null", "w");
-  fprintf(fout, "kB,nanoseconds/ops\n");
+  fprintf(fout, "working set size (kB),nanoseconds/ops\n");
   double adjustment = get_adjustment(fnull);
   if ( START_SIZE == END_SIZE ){
     run_benchmark(fout, fnull, START_SIZE, adjustment);

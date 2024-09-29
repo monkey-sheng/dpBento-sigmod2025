@@ -193,7 +193,7 @@ int main(int argc, const char** argv){
   FILE* fout = fopen(argv[5], "w");
   FILE* fnull = fopen("/dev/null", "w");
 
-  fprintf(fout, "working set size (kB), Average throughput (GB/s) \n");
+  fprintf(fout, "working set size (kB), average throughput (GB/s) \n");
    
   if ( START_SIZE == END_SIZE ) {
     run_benchmark(NUM_THREADS, fout, fnull, START_SIZE);
