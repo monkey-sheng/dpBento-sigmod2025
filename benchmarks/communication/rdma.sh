@@ -10,13 +10,12 @@ TOTAL_REQUESTS="$6"
 OUTPUT_FILE="$7"
 PASSWORD="$8"
 HOST_IB_DEV="$9"
-DPU_IB_DEV="{$10}"
-METRIC="{$11}"
+DPU_IB_DEV="${10}"
 
 # Function to SSH into farnet1 and run a script, then exit
 ssh_into_host() {
     echo "Starting SSH into $HOST_USER@$HOST_IP..."
-    sshpass -p "$PASSWORD" ssh $HOST_USER@$HOST_IP "bash -s" << 'EOF' &
+    sshpass -p "$PASSWORD" ssh $HOST_USER@$HOST_IP "bash -s" << EOF &
     echo "Connected to host $HOST_USER@$HOST_IP..."
     echo "Running server $METRIC metric..."
     ib_read_lat -d "$HOST_IB_DEV"
@@ -37,6 +36,6 @@ sleep 10
 
 # After the background process (SSH to farnet1) completes, continue on the DPU
 echo "Starting the client on the DPU..."
-ib_read_lat $HOST_IP -d $DPU_IB_DEV | tee $OUTPUT_FILE
+ib_read_lat $HOST_IP -d $DPU_IB_DEV -n $TOTAL_REQUESTS -s $FILE_SIZE| tee $OUTPUT_FILE
 
 echo "Client run completed. Statistics saved to $OUTPUT_FILE"
