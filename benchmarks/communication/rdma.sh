@@ -15,7 +15,7 @@ DPU_IB_DEV="${10}"
 # Function to SSH into farnet1 and run a script, then exit
 ssh_into_host() {
     echo "Starting SSH into $HOST_USER@$HOST_IP..."
-    sshpass -p "$PASSWORD" ssh $HOST_USER@$HOST_IP "bash -s" << 'EOF' &
+    sshpass -p "$PASSWORD" ssh $HOST_USER@$HOST_IP "bash -s" << EOF &
     echo "Connected to host $HOST_USER@$HOST_IP..."
     echo "Running server $METRIC metric..."
     ib_read_lat -d "$HOST_IB_DEV"
