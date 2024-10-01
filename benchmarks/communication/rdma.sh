@@ -36,6 +36,6 @@ sleep 10
 
 # After the background process (SSH to farnet1) completes, continue on the DPU
 echo "Starting the client on the DPU..."
-ib_read_lat $HOST_IP -d $DPU_IB_DEV | tee $OUTPUT_FILE
+ib_read_lat $HOST_IP -d $DPU_IB_DEV -n $TOTAL_REQUESTS -s $FILE_SIZE| tee $OUTPUT_FILE
 
 echo "Client run completed. Statistics saved to $OUTPUT_FILE"

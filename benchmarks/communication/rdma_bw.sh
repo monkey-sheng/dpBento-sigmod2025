@@ -19,7 +19,7 @@ ssh_into_host() {
     echo "Starting ib_read_bw server..."
 
     # Run the ib_read_bw server
-    ib_read_bw -d "$HOST_IB_DEV" -p "$PORT"
+    ib_read_bw -d "$HOST_IB_DEV"
 
     echo "ib_read_bw server started on $HOST_USER@$HOST_IP with device $HOST_IB_DEV"
     exit
