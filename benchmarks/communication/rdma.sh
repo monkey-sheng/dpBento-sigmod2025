@@ -10,8 +10,7 @@ TOTAL_REQUESTS="$6"
 OUTPUT_FILE="$7"
 PASSWORD="$8"
 HOST_IB_DEV="$9"
-DPU_IB_DEV="{$10}"
-METRIC="{$11}"
+DPU_IB_DEV="${10}"
 
 # Function to SSH into farnet1 and run a script, then exit
 ssh_into_host() {

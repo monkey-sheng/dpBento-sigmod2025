@@ -51,15 +51,15 @@ def tcp_ssh_into_host_run_server_and_client(hostip, username, port, file_size, t
     command = ["bash", shell_script, username, hostip, str(port), str(file_size), str(threads), str(total_requests), str(file_path), str(output_file), str(password), str(isBW)]
     subprocess.run(command, stdout=None, stderr=None, text=True)
 
-def rdma_ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, password, host_ib_dev, dpu_ib_dev, log_file, output_file, metric):
+def rdma_ssh_into_host_run_server_and_client(hostip, username, port, file_size, threads, total_requests, password, host_ib_dev, dpu_ib_dev, log_file, output_file):
     # output_file
     shell_script = os.path.join(os.path.dirname(__file__), "rdma.sh")
     command = ["bash", shell_script, username, hostip, str(port), str(file_size), str(threads), str(total_requests), output_file, password, host_ib_dev, dpu_ib_dev]
     subprocess.run(command, stdout=None, stderr=None, text=True)
 
-def rdma_bandwidth_ssh(hostip, username, port, password, host_ib_dev, dpu_ib_dev, output_file):
+def rdma_bandwidth_ssh(hostip, username, port, password, host_ib_dev, dpu_ib_dev, output_file, data_size, test_rounds):
     shell_script = os.path.join(os.path.dirname(__file__), "rdma_bw.sh")
-    command = ["bash", shell_script, username, hostip, str(port), output_file, password, host_ib_dev, dpu_ib_dev]
+    command = ["bash", shell_script, username, hostip, str(port), output_file, str(password), str(host_ib_dev), str(dpu_ib_dev), str(data_size), str(test_rounds)]
     subprocess.run(command, stdout=None, stderr=None, text=True)
 
 def ssh_clean_host_tcp_directory(host_username, host_ip, password, log_file):
