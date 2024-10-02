@@ -59,7 +59,7 @@ class KVSRunner(Runner):
         
         return config_file
 
-    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type, metric):
+    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type):
         # Step 1: Generate the workload configuration
         config_file = self.generate_workload_config(operation_size, operation_type, data_distribution_type)
         

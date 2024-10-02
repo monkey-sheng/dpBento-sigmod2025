@@ -15,4 +15,4 @@ if __name__ == '__main__':
     
 
     kvs_runner = KVSRunner(args)
-    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type,args.metric)
+    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type)
