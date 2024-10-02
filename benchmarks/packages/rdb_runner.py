@@ -5,8 +5,7 @@ import duckdb
 from pathlib import Path
 from .runner import Runner
 import subprocess
-
-
+import logging
 
 def drop_caches():
     try:
@@ -16,9 +15,9 @@ def drop_caches():
         # Drop caches
         subprocess.run(['sudo', 'sh', '-c', 'echo 3 > /proc/sys/vm/drop_caches'], check=True)
 
-        print("Caches dropped successfully.")
+        logging.info("Caches dropped successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
 
 class RDBRunner(Runner):
     def __init__(self, args):
@@ -29,15 +28,14 @@ class RDBRunner(Runner):
         if not os.path.exists(self.output_dir):
             try:
                 os.makedirs(self.output_dir, exist_ok=True)
-                print(f"Created output directory: {self.output_dir}")
+                logging.info(f"Created output directory: {self.output_dir}")
             except OSError as error:
-                print(f"Failed to create directory {self.output_dir}: {error}")
+                logging.error(f"Failed to create directory {self.output_dir}: {error}")
             else:
-                print(f"Directory {self.output_dir} is ready to use.")
+                logging.info(f"Directory {self.output_dir} is ready to use.")
         else:
-            print(f"Directory {self.output_dir} already exists.")
+            logging.debug(f"Directory {self.output_dir} already exists.")
 
-        
     def run_benchmark_test(self, scale_factors, query, execution_mode):
         for benchmark_item in self.args.benchmark_items.split(','):
             results = []
@@ -48,7 +46,7 @@ class RDBRunner(Runner):
             with duckdb.connect(database=duckdb_file_path, read_only=False) as conn:
                 conn.execute("LOAD tpch")
                 conn.execute(f"CALL dbgen(sf={sf})")
-                print(f"Data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
+                logging.info(f"Data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
 
         with duckdb.connect(database=duckdb_file_path, read_only=True) as conn:
             
@@ -101,4 +99,4 @@ class RDBRunner(Runner):
             existing_df = pd.read_csv(results_csv_path)
             results_df = pd.concat([existing_df, results_df], ignore_index=True)
         results_df.to_csv(results_csv_path, index=False)
-        print(f"Running RDB benchmark for {benchmark_item} with scale factors {scale_factors}, query {query}, execution mode {execution_mode}")
+        logging.info(f"Running RDB benchmark for {benchmark_item} with scale factors {scale_factors}, query {query}, execution mode {execution_mode}")
