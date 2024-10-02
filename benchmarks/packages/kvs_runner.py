@@ -6,6 +6,10 @@ from .runner import Runner
 import subprocess
 import logging
 
+READ = 0
+UPDATE = 1
+INSERT = 2
+SCAN = 3
 
 class KVSRunner(Runner):
     def __init__(self, args):
@@ -45,10 +49,10 @@ class KVSRunner(Runner):
 
         readallfields=true
 
-        readproportion={operation_type[0]}
-        updateproportion={operation_type[1]}
-        insertproportion={operation_type[2]}
-        scanproportion={operation_type[3]}
+        readproportion={operation_type[READ]}
+        updateproportion={operation_type[UPDATE]}
+        insertproportion={operation_type[INSERT]}
+        scanproportion={operation_type[SCAN]}
 
         requestdistribution={data_distribution_type}
         """
