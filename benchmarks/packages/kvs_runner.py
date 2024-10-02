@@ -45,10 +45,10 @@ class KVSRunner(Runner):
 
         readallfields=true
 
-        readproportion={operation_type['readproportion']}
-        updateproportion={operation_type['updateproportion']}
-        insertproportion={operation_type['insertproportion']}
-        scanproportion={operation_type['scanproportion']}
+        readproportion={operation_type[0]}
+        updateproportion={operation_type[1]}
+        insertproportion={operation_type[2]}
+        scanproportion={operation_type[3]}
 
         requestdistribution={data_distribution_type}
         """
