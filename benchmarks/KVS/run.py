@@ -13,6 +13,7 @@ from benchmarks.packages.kvs_runner import KVSRunner
 if __name__ == '__main__':
     parser = KVSParser()
     args = parser.parse_arguments()
+    args.operation_type = json.loads(args.operation_type)
     
 
     kvs_runner = KVSRunner(args)
