@@ -61,6 +61,8 @@ class KVSRunner(Runner):
 
     def run_benchmark_test(self, operation_size, operation_type, data_distribution_type):
         # Step 1: Generate the workload configuration
+        ycsb_dir = '/home/ubuntu/DPU-bench/benchmarks/KVS/YCSB'
+        os.chdir(ycsb_dir)
         config_file = self.generate_workload_config(operation_size, operation_type, data_distribution_type)
         
         # Step 2: Load the data into RocksDB
