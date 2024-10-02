@@ -1,0 +1,40 @@
+{
+    "benchmarks": [
+        {
+            "benchmark_class": "KVS",
+            "description": "Benchmarking for Key-Value store systems",
+
+            "benchmark_items": ["rocksdb"],
+            "notes": "Rocksdb is the database being benchmarked",
+
+            "parameters": {
+                "operation_size": [100000, 300000,1000000],
+                "operation_size_description": "Different operation sizes used for benchmarking",
+
+                "operation_type": [{
+                    "readproportion": 0.5,
+                    "updateproportion": 0.3,
+                    "insertproportion": 0.2,
+                    "scanproportion": 0
+                },
+                {
+                    "readproportion": 0.7,
+                    "updateproportion": 0.2,
+                    "insertproportion": 0.1,
+                    "scanproportion": 0
+                },
+                {
+                    "readproportion": 0.4,
+                    "updateproportion": 0.4,
+                    "insertproportion": 0.1,
+                    "scanproportion": 0.1
+                }],
+                "operation_type_description": "Different operation in various proportions",
+
+                "data_distribution_type": ["zipfian", "uniform", "latest"],
+                "data_distribution_type_description": "Different data distribution type"
+            },
+            "metrics": ["latency", "95latency", "99latency", "runtime", "throughput"]
+        }
+    ]
+}
