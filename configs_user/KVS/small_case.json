@@ -11,12 +11,12 @@
                 "operation_size": [100000],
                 "operation_size_description": "Different operation sizes used for benchmarking",
 
-                "operation_type": [{
+                "operation_type": {
                     "readproportion": 0.5,
                     "updateproportion": 0.3,
                     "insertproportion": 0.2,
                     "scanproportion": 0
-                }],
+                },
                 "operation_type_description": "Different operation in various proportions",
 
                 "data_distribution_type": ["zipfian"],
