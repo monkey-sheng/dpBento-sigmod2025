@@ -66,7 +66,7 @@ class KVSRunner(Runner):
     def run_benchmark_test(self, operation_size, operation_type, data_distribution_type):
         # Step 1: Generate the workload configuration
         parent_dir = os.path.dirname(os.path.abspath(__file__))
-        gp_dir = os.path.dirname(os.path.parent_dir)
+        gp_dir = os.path.dirname(parent_dir)
         ycsb_dir = os.path.join(gp_dir, 'KVS', 'YCSB')
         os.chdir(ycsb_dir)
         config_file = self.generate_workload_config(operation_size, operation_type, data_distribution_type)
