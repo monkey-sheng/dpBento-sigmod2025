@@ -4,11 +4,11 @@
             "benchmark_class": "memory",
             "benchmark_items": ["sysbench"],
             "parameters": {
-                "memory-block-size": ["256K"],
+                "memory-block-size": ["8k","32K","256K","1024K","4m"],
                 "memory-total-size": ["10G"],
-                "memory-oper": ["read"],
-                "memory-access-mode": ["seq"],
-                "threads": [10],
+                "memory-oper": ["read", "write"],
+                "memory-access-mode": ["seq","rnd"],
+                "threads": [8],
                 "time": [30]
             },
             "metrics": ["latency", "bandwidth"]

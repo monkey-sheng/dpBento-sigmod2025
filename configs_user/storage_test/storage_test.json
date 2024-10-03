@@ -6,15 +6,15 @@
             "benchmark_class": "storage",
             "benchmark_items": ["fio"],
             "parameters": {
-                "numProc": [2],
-                "block_sizes": ["1m"],
+                "numProc": [4],
+                "block_sizes": ["8k","32K","256K","1024K","4m"],
                 "size": ["1G"],
-                "runtime": ["3s"],
+                "runtime": ["10s"],
                 "direct": [1],
-                "iodepth": [2],
+                "iodepth": [4],
                 "io_engine": ["io_uring"],
-                "test_lst": ["randread"],
-                "runtimes":[10]
+                "test_lst": ["randread","randwrite","read", "write"],
+                "runtimes":[3]
             },
             "metrics": ["50 percentile", "bandwidth", "IOPS"]
         }

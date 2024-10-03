@@ -15,15 +15,15 @@
             "benchmark_class": "storage",
             "benchmark_items": ["fio"],
             "parameters": {
-                "numProc": [2],
-                "block_sizes": ["1m"],
+                "numProc": [4],
+                "block_sizes": ["8k","32K","256K","1024K","4m"],
                 "size": ["1G"],
-                "runtime": ["3s"],
+                "runtime": ["10s"],
                 "direct": [1],
-                "iodepth": [2],
+                "iodepth": [4],
                 "io_engine": ["io_uring"],
-                "test_lst": ["randread"],
-                "runtimes":[10]
+                "test_lst": ["randread","randwrite","read", "write"],
+                "runtimes":[3]
             },
             "metrics": ["50 percentile", "bandwidth", "IOPS"]
         },
@@ -34,8 +34,8 @@
             "parameters": {
                 "algorithm": ["aes-256-cbc"],
                 "seconds": [9],
-                "bytes": [16],
-                "multi": [1],
+                "bytes": [2,8,32,128,512],
+                "multi": [4],
                 "async_jobs": [0],
                 "misalign": [0]
             },
@@ -46,30 +46,12 @@
             "benchmark_class": "memory",
             "benchmark_items": ["sysbench"],
             "parameters": {
-                "memory-block-size": ["256K"],
+                "memory-block-size": ["8k","32K","256K","1024K","4m"],
                 "memory-total-size": ["10G"],
-                "memory-oper": ["read"],
-                "memory-access-mode": ["seq"],
-                "threads": [10],
-                "time": [30]
-            },
-            "metrics": ["latency", "bandwidth"]
-        },
-
-        {
-            "benchmark_class": "communication",
-            "benchmark_items": ["TCP", "RDMA"],
-            "parameters": {
-                "data_size": [8],
-                "queue_depth": [1],
+                "memory-oper": ["read", "write"],
+                "memory-access-mode": ["seq","rnd"],
                 "threads": [8],
-                "test_rounds":[1000],
-                "host_ib_dev": "",
-                "dpu_ib_dev": "",
-                "host_ip": "10.70.60.11",
-                "host_username":"annali",
-                "dpu_ip": "192.168.100.2",
-                "port": "8080"
+                "time": [30]
             },
             "metrics": ["latency", "bandwidth"]
         },

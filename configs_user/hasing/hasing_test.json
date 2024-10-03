@@ -8,8 +8,8 @@
             "parameters": {
                 "algorithm": ["aes-256-cbc"],
                 "seconds": [9],
-                "bytes": [16],
-                "multi": [1],
+                "bytes": [2,8,32,128,512],
+                "multi": [4],
                 "async_jobs": [0],
                 "misalign": [0]
             },
