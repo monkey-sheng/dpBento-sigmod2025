@@ -4,8 +4,6 @@ import csv
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Communication benchmark')
-    parser.add_argument('--benchmark_items', type=str, required=True, help='Comma-separated list of benchmark items')
-    parser.add_argument('--data_size', type=int, default=8, help='Bytes to transfer')
     parser.add_argument('--metrics', type=str, default='', help='Metrics to collect in the generated file')
     args = parser.parse_args()
     return args
@@ -82,15 +80,19 @@ def parse_rdma_output(metrics, data_size):
             lines = contents.splitlines()
             bw_data = []
 
-            # Look for the line that has the relevant bandwidth data
+            found_bw_peak = False
             for line in lines:
                 if "BW peak" in line or "MsgRate" in line:
+                    found_bw_peak = True
                     continue
-                elif line.strip() and data_size in line:  # Line with actual data
-                    parts = line.split()
-                    bw_peak = float(parts[2])  # Peak BW value
-                    bw_avg = float(parts[3])   # Average BW value
+                
+                if found_bw_peak:  # The next line after "BW peak" is what we want
+                    parts = line.strip().split()
+                    bw_peak = float(parts[2])   # Extract BW peak value
+                    bw_avg = float(parts[3])    # Extract BW average value
                     bw_data.append((bw_peak, bw_avg))
+                    
+                    found_bw_peak = False  # Reset after processing the next line
 
             output_csv = os.path.join(os.path.dirname(__file__), 'output', 'RDMA', f'{metric}_output.csv')
             headers = ["BW Peak (MB/sec)","BW Average (MB/sec)"]
@@ -121,7 +123,4 @@ def parse_rdma_output(metrics, data_size):
 
 if __name__ == '__main__':
     args = parse_arguments()
-    benchmark_items = args.benchmark_items.split(',')
-    
-    if "RDMA" in benchmark_items:   
-        parse_rdma_output(args.metrics, args.data_size)
+    parse_rdma_output(args.metrics)
