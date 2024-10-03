@@ -74,6 +74,7 @@ class ReportGenerator:
             fieldnames = ['operationcount', 'readproportion', 'updateproportion', 'insertproportion', 
                           'scanproportion', 'requestdistribution'] + self.metrics
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            print(fieldnames)
             writer.writeheader()
             for data in report_data:
                 writer.writerow(data)
