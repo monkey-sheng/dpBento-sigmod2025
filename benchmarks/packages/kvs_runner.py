@@ -94,10 +94,12 @@ class KVSRunner(Runner):
 
         result_file = self.get_unique_filename(self.output_dir, 'output.txt')
         with open(result_file, 'w') as f:
-            f.write("Configuration Content:\n")
-            f.write(config_file.read() + "\n\n")
+            f.write(f"Configuration File: {config_file}\n\n")
+            with open(config_file, 'r') as config_f:
+                f.write("Configuration Content:\n")
+                f.write(config_f.read() + "\n\n")
             f.write(run_result.stdout.decode())
-        logging.info(f"Benchmark results saved to {result_file}")
+            logging.info(f"Benchmark results saved to {result_file}")
 
         print("Benchmark completed successfully!")
 
