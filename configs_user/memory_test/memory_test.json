@@ -11,7 +11,7 @@
                 "threads": [10],
                 "time": [30]
             },
-            "metrics": [ "bandwidth"]
+            "metrics": ["latency", "bandwidth"]
         }
     ]
 }
