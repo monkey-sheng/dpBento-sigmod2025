@@ -22,7 +22,7 @@ def main():
     run_command(['sudo', 'apt', 'install', '-y', 'zstd', 'wget', 'unzip'])
     
     with open(benchmark_dir + "/results/results.csv", "w") as f:
-        f.write("version" + chr(9) + "num_threads" + chr(9) + "SF" + chr(9) + "time(seconds)" + chr(9) + "validation")
+        f.write("version" + chr(9) + "num_threads" + chr(9) + "SF" + chr(9) + "query" + chr(9) + "time(seconds)" + chr(9) + "validation\n")
 
     logging.info("Setup complete")
 

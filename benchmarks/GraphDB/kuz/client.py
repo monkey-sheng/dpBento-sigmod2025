@@ -33,24 +33,26 @@ def main():
     benchmark_dir = os.path.dirname(os.path.abspath(__file__))
     queries_to_run = ""
     exec_mode = ""
-    with open(benchmark_dir + "/kuz/scratch/queries.txt") as q:
+    with open(benchmark_dir + "/scratch/queries.txt") as q:
         queries_to_run = q.read()
-    with open(benchmark_dir + "/kuz/scratch/exec_mode.txt") as e:
+    with open(benchmark_dir + "/scratch/exec_mode.txt") as e:
         exec_mode = e.read()
     devnull = open("/dev/null", "w")
 
-    db = kuzu.Database('kuz/scratch/lsqb-database')
+    db = kuzu.Database(benchmark_dir + '/scratch/lsqb-database')
     conn = kuzu.Connection(db)
     conn.set_max_threads_for_exec(num_threads)
 
-    with open(f"results/results.csv", "a+") as results_file:
+    with open(benchmark_dir + f"/../results/results.csv", "a+") as results_file:
         for i in range(1, 10):
             if str(i) not in queries_to_run:
                 continue
             print(f"Query {i}")
-            with open(f"kuz/q{i}.cypher", "r") as query_file:
-                if exec_mode == "cold":
+            with open(benchmark_dir + f"/q{i}.cypher", "r") as query_file:
+                print(benchmark_dir + f"/q{i}.cypher")
+                if exec_mode == "hot":
                     run_query(conn, sf, i, query_file.read(), devnull, num_threads)
+                    query_file.seek(0, 0)
                 run_query(conn, sf, i, query_file.read(), results_file, num_threads)
 
 if __name__ == "__main__":
