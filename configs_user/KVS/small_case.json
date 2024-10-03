@@ -11,7 +11,7 @@
                 "operation_size": [100000],
                 "operation_size_description": "Different operation sizes used for benchmarking",
 
-                "operation_type": [[0.5, 0.3, 0.2, 0]],
+                "operation_type": [[0.4, 0.4, 0.1, 0.1]],
                 "operation_type_description": "Different operation in various proportions, 0->read, 1->update, 2->insert, 3-> scan",
 
                 "data_distribution_type": ["zipfian"],

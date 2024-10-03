@@ -8,7 +8,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 if base_dir not in sys.path:
     sys.path.append(base_dir)
-    
+
 from benchmarks.packages.kvs_parser import KVSParser
 
 class ReportGenerator:
@@ -17,40 +17,81 @@ class ReportGenerator:
         parser = KVSParser()
         args = parser.parse_arguments()
         self.metrics = json.loads(args.metrics)
-        
 
     def extract_metrics(self, output_content):
-        """Extract metrics from output content."""
-        metrics_data = {}
-        
-        # Find the overall runtime and throughput
-        overall_match = re.findall(r'\[OVERALL\], (.+?), ([\d.]+)', output_content)
-        for metric, value in overall_match:
-            if metric in self.metrics:
-                metrics_data[metric] = float(value)
-        
-        # Extracting configuration parameters
-        operation_count_match = re.search(r'operationcount=(\d+)', output_content)
-        read_proportion_match = re.search(r'readproportion=(\d+\.?\d*)', output_content)
-        update_proportion_match = re.search(r'updateproportion=(\d+\.?\d*)', output_content)
-        insert_proportion_match = re.search(r'insertproportion=(\d+\.?\d*)', output_content)
-        scan_proportion_match = re.search(r'scanproportion=(\d+\.?\d*)', output_content)
-        request_distribution_match = re.search(r'requestdistribution=(\w+)', output_content)
+        # Initialize a dictionary to hold the extracted values
+        extracted_metrics = {
+            "latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
+            "95latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
+            "99latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
+            "runtime(ms)": None,
+            "throughput(ops/sec)": None,
+            "operationcount": None,
+            "readproportion": None,
+            "updateproportion": None,
+            "insertproportion": None,
+            "scanproportion": None,
+            "requestdistribution": None
+        }
 
-        if operation_count_match:
-            metrics_data['operationcount'] = int(operation_count_match.group(1))
-        if read_proportion_match:
-            metrics_data['readproportion'] = float(read_proportion_match.group(1))
-        if update_proportion_match:
-            metrics_data['updateproportion'] = float(update_proportion_match.group(1))
-        if insert_proportion_match:
-            metrics_data['insertproportion'] = float(insert_proportion_match.group(1))
-        if scan_proportion_match:
-            metrics_data['scanproportion'] = float(scan_proportion_match.group(1))
-        if request_distribution_match:
-            metrics_data['requestdistribution'] = request_distribution_match.group(1)
+        # Use regular expressions to extract values
+        for line in output_content.splitlines():
+            # Extract overall runtime and throughput
+            if "[OVERALL], RunTime(ms)" in line:
+                extracted_metrics["runtime(ms)"] = int(re.search(r"\[OVERALL\], RunTime\(ms\), (\d+)", line).group(1))
+            if "[OVERALL], Throughput(ops/sec)" in line:
+                extracted_metrics["throughput(ops/sec)"] = float(re.search(r"\[OVERALL\], Throughput\(ops/sec\), ([\d.]+)", line).group(1))
 
-        return metrics_data
+            # Extract operation metrics (READ, UPDATE, INSERT, SCAN)
+            for operation in ["READ", "UPDATE", "INSERT", "SCAN"]:
+                if f"[{operation}]" in line:
+                    # Latency (AverageLatency)
+                    match_latency = re.search(r"AverageLatency\(us\), ([\d.]+)", line)
+                    if match_latency:
+                        extracted_metrics["latency(us)"][operation] = float(match_latency.group(1))
+                        
+                    # 95th Percentile Latency
+                    match_95th = re.search(r"95thPercentileLatency\(us\), ([\d.]+)", line)
+                    if match_95th:
+                        extracted_metrics["95latency(us)"][operation] = float(match_95th.group(1))
+                        
+                    # 99th Percentile Latency
+                    match_99th = re.search(r"99thPercentileLatency\(us\), ([\d.]+)", line)
+                    if match_99th:
+                        extracted_metrics["99latency(us)"][operation] = float(match_99th.group(1))
+
+            # Extract operation count
+            if "operationcount" in line:
+                match_operation_count = re.search(r"operationcount=(\d+)", line)
+                if match_operation_count:
+                    extracted_metrics["operationcount"] = int(match_operation_count.group(1))
+
+            # Extract operation proportions
+            match_readproportion = re.search(r"readproportion=(\d+.\d+)", line)
+            if match_readproportion:
+                extracted_metrics['readproportion'] = float(match_readproportion.group(1))
+
+            match_updateproportion = re.search(r"updateproportion=(\d+.\d+)", line)
+            if match_updateproportion:
+                extracted_metrics['updateproportion'] = float(match_updateproportion.group(1))
+
+            match_insertproportion = re.search(r"insertproportion=(\d+.\d+)", line)
+            if match_insertproportion:
+                extracted_metrics['insertproportion'] = float(match_insertproportion.group(1))
+
+            match_scanproportion = re.search(r"scanproportion=(\d+.\d+)", line)
+            if match_scanproportion:
+                extracted_metrics['scanproportion'] = float(match_scanproportion.group(1))
+            else:
+                extracted_metrics['scanproportion'] = 0.0  # Set default to 0.0 if not found
+
+            # Extract request distribution
+            if "requestdistribution" in line:
+                match_request_distribution = re.search(r"requestdistribution=(.+)", line)
+                if match_request_distribution:
+                    extracted_metrics["requestdistribution"] = match_request_distribution.group(1)
+
+        return extracted_metrics
 
     def generate_report(self):
         """Generate a report from output files."""
@@ -71,12 +112,16 @@ class ReportGenerator:
         # Write the report data to CSV
         report_file = os.path.join(self.output_dir, 'report.csv')
         with open(report_file, 'w', newline='') as csvfile:
-            fieldnames = ['operationcount', 'readproportion', 'updateproportion', 'insertproportion', 
-                          'scanproportion', 'requestdistribution'] + self.metrics
+            fieldnames = ['operationcount', 'readproportion', 'updateproportion', 
+                          'insertproportion', 'scanproportion', 'requestdistribution'] + self.metrics
+            
+            # Add units to latency, runtime, and throughput
+            fieldnames = [name if name not in self.metrics else f"{name}(us)" if "latency" in name else f"{name}(ms)" if name == "runtime" else f"{name}(ops/sec)" for name in fieldnames]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            print(fieldnames)
             writer.writeheader()
             for data in report_data:
+                # Convert None to empty strings for CSV
+                data = {k: (v if v is not None else '') for k, v in data.items()}
                 writer.writerow(data)
 
         print(f"Report generated: {report_file}")
