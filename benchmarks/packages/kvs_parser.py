@@ -13,7 +13,7 @@ class KVSParser(Parser):
         self.parser.add_argument("--operation_size_description", help="Description of operation sizes")
         self.parser.add_argument("--operation_type_description", help="Description of operation types")
         self.parser.add_argument("--data_distribution_type_description", help="Description of data distribution types")
-        self.parser.add_argument("--metrics", nargs='+', help="Metrics to collect, e.g., latency, runtime, throughput")
+        self.parser.add_argument("--metrics", help="Metrics to collect, e.g., latency, runtime, throughput")
 
     def parse_arguments(self):
         return self.parser.parse_args()
