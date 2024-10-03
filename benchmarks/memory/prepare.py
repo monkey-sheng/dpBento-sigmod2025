@@ -1,29 +1,40 @@
 import subprocess
-import os
-import logging
+import sys
 
-def run_command(command, check=True, shell=False):
-    """Run a shell command."""
-    logging.info(f"Running command: {' '.join(command)}")
-    subprocess.run(command, check=check, shell=shell)
+def run_command(command):
+    try:
+        subprocess.run(command, check=True, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {command}")
+        print(f"Error details: {e}")
+        sys.exit(1)
 
+def install_sysbench():
+    print("Installing sysbench...")
+    run_command("sudo apt-get update")
+    run_command("sudo apt-get install -y sysbench")
 
-#if __name__ == '__main__':
+def install_python_packages():
+    print("Installing required Python packages...")
+    required_packages = [
+        'numpy',
+        'pandas',
+        'matplotlib'
+    ]
+    run_command(f"sudo apt-get install -y python3-pip")
+    for package in required_packages:
+        run_command(f"pip3 install {package}")
+
 def main():
-    logging.basicConfig(level=logging.INFO)
-
-    # Get the directory of the prepare.py script
-    benchmark_dir = os.path.dirname(os.path.abspath(__file__))
-    #print(benchmark_dir)
-    logging.info(f"benchmark directory: {benchmark_dir}")
-
-    run_command(['gcc', '-O2', benchmark_dir + '/mem_bandwidth.c', '-o', benchmark_dir + '/band.out'])
-    run_command(['g++', '-O2', benchmark_dir + '/mem_latency.cpp', '-o', benchmark_dir + '/lat.out'])
-    run_command(['pip', 'install', "pandas"]) # feels sus, but Chihan said to do this for now
-    open(benchmark_dir + "/band.csv", "w")
-    open(benchmark_dir + "/lat.csv", "w")
+    print("Starting preparation for memory benchmark...")
     
-    logging.info("Setup complete")
+    # Install sysbench
+    install_sysbench()
+    
+    # Install Python packages
+    install_python_packages()
+    
+    print("Preparation completed successfully.")
 
 if __name__ == "__main__":
     main()
