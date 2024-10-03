@@ -42,10 +42,10 @@ if __name__ == '__main__':
         metrics = json.loads(args.metrics)
         assert(isinstance(metrics, list))
         metrics.append('benchmark_item')
-        print('metrics to keep:', metrics)
-        concat_df = concat_df[metrics]
+        #print('metrics to keep:', metrics)
+        #concat_df = concat_df[metrics]
 
-    print('after keeping only the specified metrics:')
+    #print('after keeping only the specified metrics:')
     print(concat_df)
 
     # write the aggregated results to a csv file

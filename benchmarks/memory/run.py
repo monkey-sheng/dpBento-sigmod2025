@@ -11,6 +11,7 @@ def parse_arguments():
     parser.add_argument('--starting_size', type=str, required=True, help='starting size for working set')
     parser.add_argument("--ending_size", type=str, required=True, help="ending size for working set")
     parser.add_argument("--test_duration_multiplier", type=int, default=8, help="increase test run duration, must be power of 2")
+    parser.add_argument("--metrics", type=str, help="ignored by this test")
 
     return parser.parse_args()
 
