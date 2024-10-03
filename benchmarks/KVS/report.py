@@ -2,6 +2,7 @@ import os
 import csv
 import re
 import sys
+import json
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
@@ -15,7 +16,8 @@ class ReportGenerator:
         self.output_dir = output_dir
         parser = KVSParser()
         args = parser.parse_arguments()
-        self.metrics = args.metrics
+        self.metrics = json.loads(args.metrics)
+        
 
     def extract_metrics(self, output_content):
         """Extract metrics from output content."""
@@ -81,6 +83,8 @@ class ReportGenerator:
 
 
 if __name__ == "__main__":
-    output_directory = 'output'  # Adjust as necessary
-    report_generator = ReportGenerator(output_directory)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, 'output')
+
+    report_generator = ReportGenerator(output_dir)
     report_generator.generate_report()
