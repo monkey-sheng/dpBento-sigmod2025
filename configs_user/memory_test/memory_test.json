@@ -1,17 +1,17 @@
 {
-    "output_dir": "/optional/path/to/your/DPU-bench/experiments/storage_test/Output",
-    
-    "benchmarks":
-    [
+    "benchmarks": [
         {
             "benchmark_class": "memory",
-            "benchmark_items": ["bandwidth", "latency"],
+            "benchmark_items": ["sysbench"],
             "parameters": {
-              "num_threads_for_seq": [0],
-              "starting_size": [1024],
-              "ending_size": ["L2_cache"],
-              "test_duration_multiplier": [8]
-            }
+                "memory-block-size": ["256K"],
+                "memory-total-size": ["10G"],
+                "memory-oper": ["read"],
+                "memory-access-mode": ["seq"],
+                "threads": [10],
+                "time": [30]
+            },
+            "metrics": [ "bandwidth"]
         }
     ]
 }
