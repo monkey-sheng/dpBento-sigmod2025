@@ -7,9 +7,9 @@ class KVSParser(Parser):
         self._add_kvs_arguments()
         
     def _add_kvs_arguments(self):
-        self.parser.add_argument('--operation_size', type=int, required=True, help='Operation sizes for KVS benchmarks')
-        self.parser.add_argument('--operation_type', required=True, help='Operation types for KVS benchmarks')
-        self.parser.add_argument('--data_distribution_type', type=str, required=True, help='Data distribution types for KVS benchmarks')
+        self.parser.add_argument('--operation_size', type=int, help='Operation sizes for KVS benchmarks')
+        self.parser.add_argument('--operation_type', help='Operation types for KVS benchmarks')
+        self.parser.add_argument('--data_distribution_type', type=str, help='Data distribution types for KVS benchmarks')
         self.parser.add_argument("--operation_size_description", help="Description of operation sizes")
         self.parser.add_argument("--operation_type_description", help="Description of operation types")
         self.parser.add_argument("--data_distribution_type_description", help="Description of data distribution types")
