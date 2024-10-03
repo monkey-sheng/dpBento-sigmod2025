@@ -2,6 +2,7 @@ import time
 import sys
 import kuzu
 import logging
+import os
 
 def run_query(conn, sf, query_id, query_spec, results_file, num_threads):
     start = time.time()
@@ -27,7 +28,16 @@ def main():
     if len(sys.argv) > 2:
         num_threads = int(sys.argv[2])
     else:
-        num_threads = 4
+        num_threads = len(os.sched_getaffinity(0))
+    
+    benchmark_dir = os.path.dirname(os.path.abspath(__file__))
+    queries_to_run = ""
+    exec_mode = ""
+    with open(benchmark_dir + "/kuz/scratch/queries.txt") as q:
+        queries_to_run = q.read()
+    with open(benchmark_dir + "/kuz/scratch/exec_mode.txt") as e:
+        exec_mode = e.read()
+    devnull = open("/dev/null", "w")
 
     db = kuzu.Database('kuz/scratch/lsqb-database')
     conn = kuzu.Connection(db)
@@ -35,8 +45,12 @@ def main():
 
     with open(f"results/results.csv", "a+") as results_file:
         for i in range(1, 10):
+            if str(i) not in queries_to_run:
+                continue
             print(f"Query {i}")
             with open(f"kuz/q{i}.cypher", "r") as query_file:
+                if exec_mode == "cold":
+                    run_query(conn, sf, i, query_file.read(), devnull, num_threads)
                 run_query(conn, sf, i, query_file.read(), results_file, num_threads)
 
 if __name__ == "__main__":

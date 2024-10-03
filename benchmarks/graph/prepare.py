@@ -17,10 +17,13 @@ def main():
     #print(benchmark_dir)
     logging.info(f"benchmark directory: {benchmark_dir}")
 
-    run_command(['pip', 'install', "--user", "kuzu"]) # feels sus, but Chihan said to do this for now
+    run_command(['pip', 'install', "kuzu"]) # feels sus, but Chihan said to do this for now
     run_command(['sudo', 'apt', 'update'])
     run_command(['sudo', 'apt', 'install', '-y', 'zstd', 'wget', 'unzip'])
     
+    with open(benchmark_dir + "/results/results.csv", "w") as f:
+        f.write("version" + chr(9) + "num_threads" + chr(9) + "SF" + chr(9) + "time(seconds)" + chr(9) + "validation")
+
     logging.info("Setup complete")
 
 if __name__ == "__main__":
