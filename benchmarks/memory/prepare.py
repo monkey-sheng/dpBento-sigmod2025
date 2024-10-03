@@ -20,6 +20,8 @@ def main():
     run_command(['gcc', '-O2', benchmark_dir + '/mem_bandwidth.c', '-o', benchmark_dir + '/band.out'])
     run_command(['g++', '-O2', benchmark_dir + '/mem_latency.cpp', '-o', benchmark_dir + '/lat.out'])
     run_command(['pip', 'install', "pandas"]) # feels sus, but Chihan said to do this for now
+    open(benchmark_dir + "/band.csv", "w")
+    open(benchmark_dir + "/lat.csv", "w")
     
     logging.info("Setup complete")
 

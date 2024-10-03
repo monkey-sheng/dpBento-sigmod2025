@@ -107,7 +107,7 @@ int main(int argc, char** argv){
     if (l3_size != -1 && l3_size != 0 && size < l3_size && size * 2 > l3_size) { 
       run_benchmark(fout, fnull, l3_size, adjustment);
     }
-    run_benchmark(fout, fnull, END_SIZE, adjustment);
   }
+  run_benchmark(fout, fnull, END_SIZE, adjustment);
   exit(EXIT_SUCCESS);
 }

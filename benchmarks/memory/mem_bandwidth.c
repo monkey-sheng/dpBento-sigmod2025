@@ -76,7 +76,7 @@ void run_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size)
     bandwidth += ((double)total/NUM_THREADS/1024/1024/1024)/(((thread_args[i].end.tv_sec * 1000000 + thread_args[i].end.tv_usec) - (thread_args[i].start.tv_sec * 1000000 + thread_args[i].start.tv_usec))/(double)1000000); 
     //printf("size: %lld, thread: %ld, cum_band: %lf\n", thread_args[i].size, threads[i], bandwidth );
   }
-  fprintf(fout, "%lld,%lf \n", size/1024, bandwidth);
+  fprintf(fout, "%lld,%d,%lf \n", size/1024, NUM_THREADS, bandwidth);
 }
 
 void check_and_run_cache(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size, int arr_size, uint64_t arr[arr_size]){
@@ -190,10 +190,10 @@ int main(int argc, const char** argv){
   }
   sort_arr(sizeof(cache_sizes)/ sizeof(uint64_t), cache_sizes);
   
-  FILE* fout = fopen(argv[5], "w");
+  FILE* fout = fopen(argv[5], "a");
   FILE* fnull = fopen("/dev/null", "w");
 
-  fprintf(fout, "working set size (kB), average throughput (GB/s) \n");
+  fprintf(fout, "working set size (kB), number of threads, average throughput (GB/s) \n");
    
   if ( START_SIZE == END_SIZE ) {
     run_benchmark(NUM_THREADS, fout, fnull, START_SIZE);

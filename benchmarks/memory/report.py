@@ -20,16 +20,24 @@ def gather_results() -> pd.DataFrame:
     dir = os.path.dirname(os.path.realpath(__file__))
     
     all_dfs = []
-    for item in ['BANDWIDTH', 'LATENCY']:
-        # old # Use glob to find all .csv files in the directory
-        #result_paths = glob.glob(os.path.join(dir, '*.csv'))
-        result_paths = [os.path.join(dir, 'band.csv'), os.path.join(dir, 'lat.csv')]
-        
-        for result_csv in result_paths:
-            df = pd.read_csv(result_csv)
-            df['benchmark_item'] = item # should it be benchmark_item
-            print(df)
-            all_dfs.append(df)
+    df = pd.read_csv(os.path.join(dir, 'band.csv'))
+    df['benchmark_item'] = "bandwidth"
+    all_dfs.append(df)
+
+    df = pd.read_csv(os.path.join(dir, 'lat.csv'))
+    df['benchmark_item'] = "latency"
+    all_dfs.append(df)
+
+   # for item in ['BANDWIDTH', 'LATENCY']:
+   #     # old # Use glob to find all .csv files in the directory
+   #     #result_paths = glob.glob(os.path.join(dir, '*.csv'))
+   #     result_paths = [os.path.join(dir, 'band.csv'), os.path.join(dir, 'lat.csv')]
+   #     
+   #     for result_csv in result_paths:
+   #         df = pd.read_csv(result_csv)
+   #         df['benchmark_item'] = item # should it be benchmark_item
+   #         print(df)
+   #         all_dfs.append(df)
 
         # merge all the dataframes
     return pd.concat(all_dfs)
@@ -38,12 +46,12 @@ if __name__ == '__main__':
     args = parse_arguments()
     concat_df = gather_results()
     print(concat_df)
-    if args.metrics:
-        metrics = json.loads(args.metrics)
-        assert(isinstance(metrics, list))
-        metrics.append('benchmark_item')
-        #print('metrics to keep:', metrics)
-        #concat_df = concat_df[metrics]
+    #if args.metrics:
+    #    metrics = json.loads(args.metrics)
+    #    assert(isinstance(metrics, list))
+    #    metrics.append('benchmark_item')
+    #    #print('metrics to keep:', metrics)
+    #    #concat_df = concat_df[metrics]
 
     #print('after keeping only the specified metrics:')
     print(concat_df)
