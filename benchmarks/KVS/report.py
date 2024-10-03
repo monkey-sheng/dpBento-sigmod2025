@@ -15,7 +15,7 @@ class ReportGenerator:
         self.output_dir = output_dir
         parser = KVSParser()
         args = parser.parse_arguments()
-        self.metrics = args.metric
+        self.metrics = args.metrics
 
     def extract_metrics(self, output_content):
         """Extract metrics from output content."""
