@@ -17,7 +17,7 @@
                 "data_distribution_type": ["zipfian"],
                 "data_distribution_type_description": "Different data distribution type"
             },
-            "metrics": ["latency", "95latency", "99latency", "runtime", "throughput"]
+            "metrics": [["latency", "95latency", "99latency", "runtime", "throughput"]]
         }
     ]
 }
