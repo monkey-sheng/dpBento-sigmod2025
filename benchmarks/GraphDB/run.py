@@ -43,8 +43,8 @@ def main():
     os.putenv("SF", args.scale_factor)
     os.putenv("MAX_SF", max_sf)
     
-    if not os.path.exists(benchmark_dir + "/data/social-network-sf" + args.scale_factor + "-projected-fk") and not os.path.exists(benchmark_dir + "/data/social-network-sf" + args.scale_factor + "-projected-fk.tar.zst"): # NOTE: optimization may fail
-        run_command(["bash", benchmark_dir + "/scripts/download-projected-fk-data-sets.sh"])
+    #if not os.path.exists(benchmark_dir + "/data/social-network-sf" + args.scale_factor + "-projected-fk") and not os.path.exists(benchmark_dir + "/data/social-network-sf" + args.scale_factor + "-projected-fk.tar.zst"): # NOTE: optimization may fail
+    run_command(["bash", benchmark_dir + "/scripts/download-projected-fk-data-sets.sh"])
 
     run_benchmark(args.num_threads)
 
