@@ -5,8 +5,9 @@ import sys
 
 def uninstall_maven():
     # Uninstall maven using apt
+    
     try:
-        subprocess.run(["sudo", "apt", "remove", "--purge", "-y", "maven", "git-lfs"], check=True)
+        subprocess.run(["sudo", "apt", "remove", "--purge", "-y", "maven"], check=True)
         print("Maven has been successfully uninstalled.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred during Maven uninstallation: {e}")
