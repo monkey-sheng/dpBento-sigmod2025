@@ -9,10 +9,27 @@ def run_command(command, check=True, shell=False):
     subprocess.run(command, check=check, shell=shell)
 
 def remove_directory(path):
-    """Remove the specified directory if it exists."""
+    """Remove the specified directory if it exists, handling permission errors."""
     if os.path.exists(path):
-        shutil.rmtree(path)
-        logging.info(f"Removed directory: {path}")
+        # Try changing permissions to ensure we can delete it
+        for root, dirs, files in os.walk(path):
+            for name in dirs:
+                try:
+                    os.chmod(os.path.join(root, name), 0o777)
+                except Exception as e:
+                    logging.warning(f"Failed to change permission for directory {name}: {e}")
+            for name in files:
+                try:
+                    os.chmod(os.path.join(root, name), 0o777)
+                except Exception as e:
+                    logging.warning(f"Failed to change permission for file {name}: {e}")
+        
+        try:
+            # Attempt to remove the directory
+            shutil.rmtree(path)
+            logging.info(f"Removed directory: {path}")
+        except Exception as e:
+            logging.error(f"Failed to remove directory {path}: {e}")
 
 def remove_package(package_name):
     """Remove the specified package using apt."""
@@ -33,6 +50,15 @@ def clean_package_cache():
     """Clean up package cache."""
     run_command(['sudo', 'apt', 'clean'])
     logging.info("Cleaned up package cache.")
+
+def clean_tmp_directory():
+    """Clean up the /tmp directory."""
+    tmp_path = '/tmp'
+    logging.info(f"Cleaning up {tmp_path} directory...")
+    remove_directory(tmp_path)
+    # Recreate /tmp directory to avoid system issues
+    os.makedirs(tmp_path, mode=0o1777, exist_ok=True)
+    logging.info(f"Recreated {tmp_path} directory.")
 
 def main():
     logging.basicConfig(level=logging.INFO)
@@ -59,7 +85,10 @@ def main():
     # Clean up package cache
     clean_package_cache()
 
-    logging.info("Cleanup complete. All installed packages have been removed.")
+    # Clean up /tmp directory
+    clean_tmp_directory()
+
+    logging.info("Cleanup complete. All installed packages and temporary files have been removed.")
 
 if __name__ == "__main__":
     main()

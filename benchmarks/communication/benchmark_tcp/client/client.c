@@ -304,14 +304,14 @@ int main(int argc, const char **argv) {
     case 1:
       fprintf(fp,
               "%d, %d, %d, %.2lf, %.2lf, %.2lf, %.2lf, %.2f, %.2lf, %.2lf, "
-              "%.2lf, %.2lf, %.2lf, %.2lf\n",
+              "%.2lf, %.2lf, %.2lf, %.2Lf\n",
               total_requests, file_size, num_threads,
               ((size_t)total_requests / total_latency * 1000000),
               LatencyStats.StandardError, LatencyStats.Min, LatencyStats.Max,
               total_latency / total_requests, PercentileStats.P50,
               PercentileStats.P90, PercentileStats.P99, PercentileStats.P99p9,
               PercentileStats.P99p99,
-              (8 * file_size * 1000000) / (total_latency / total_requests));
+              (long double) (8 * file_size) / (total_latency / total_requests));
       break;
     case 2:
       fprintf(fp, "Min: %.2lf\n", LatencyStats.Min);

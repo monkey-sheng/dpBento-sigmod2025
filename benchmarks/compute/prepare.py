@@ -4,8 +4,8 @@ import subprocess
 
 
 def install_dependencies():
-    print('installing stress-ng...')
-    subprocess.run("sudo apt install stress-ng python3-venv -y", shell=True, check=True)
+    # print('installing stress-ng...')
+    # subprocess.run("sudo apt install stress-ng python3-venv -y", shell=True, check=True)
     subprocess.run("pip install pandas", shell=True, check=True)
     # subprocess.run("pip install numpy", shell=True, check=True)
     
@@ -24,6 +24,7 @@ def compile_exec():
     print('compiling compute benchmarks...')
     subprocess.run(f"gcc -o int32 {int_path}/int32.c", shell=True, check=True)
     subprocess.run(f"gcc -o int8 {int_path}/int8.c", shell=True, check=True)
+    subprocess.run(f"gcc -o int128 {int_path}/int128.c", shell=True, check=True)
     subprocess.run(f"gcc -o fp32 {fp_path}/fp32.c", shell=True, check=True)
     subprocess.run(f"gcc -o double {fp_path}/double.c", shell=True, check=True)
     print('compiled compute benchmarks')

@@ -6,6 +6,10 @@ from .runner import Runner
 import subprocess
 import logging
 
+READ = 0
+UPDATE = 1
+INSERT = 2
+SCAN = 3
 
 class KVSRunner(Runner):
     def __init__(self, args):
@@ -45,10 +49,10 @@ class KVSRunner(Runner):
 
         readallfields=true
 
-        readproportion={operation_type['readproportion']}
-        updateproportion={operation_type['updateproportion']}
-        insertproportion={operation_type['insertproportion']}
-        scanproportion={operation_type['scanproportion']}
+        readproportion={operation_type[READ]}
+        updateproportion={operation_type[UPDATE]}
+        insertproportion={operation_type[INSERT]}
+        scanproportion={operation_type[SCAN]}
 
         requestdistribution={data_distribution_type}
         """
@@ -59,8 +63,12 @@ class KVSRunner(Runner):
         
         return config_file
 
-    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type, metric):
+    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type):
         # Step 1: Generate the workload configuration
+        parent_dir = os.path.dirname(os.path.abspath(__file__))
+        gp_dir = os.path.dirname(parent_dir)
+        ycsb_dir = os.path.join(gp_dir, 'KVS', 'YCSB')
+        os.chdir(ycsb_dir)
         config_file = self.generate_workload_config(operation_size, operation_type, data_distribution_type)
         
         # Step 2: Load the data into RocksDB
@@ -86,8 +94,12 @@ class KVSRunner(Runner):
 
         result_file = self.get_unique_filename(self.output_dir, 'output.txt')
         with open(result_file, 'w') as f:
+            f.write(f"Configuration File: {config_file}\n\n")
+            with open(config_file, 'r') as config_f:
+                f.write("Configuration Content:\n")
+                f.write(config_f.read() + "\n\n")
             f.write(run_result.stdout.decode())
-        logging.info(f"Benchmark results saved to {result_file}")
+            logging.info(f"Benchmark results saved to {result_file}")
 
         print("Benchmark completed successfully!")
 

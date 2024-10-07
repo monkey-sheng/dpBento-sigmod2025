@@ -9,28 +9,29 @@ import numpy as np
 # Regular expression patterns
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
 bw_pattern = re.compile(r'bw=([\d.]+[kM]?[KM]?iB/s)')
-lat_avg_msec_pattern = re.compile(r'clat.*?lat \(msec\):.*?avg=([\d\.]+)', re.DOTALL)
-lat_avg_usec_pattern = re.compile(r'clat.*?lat \(usec\):.*?avg=([\d\.]+)', re.DOTALL)
+lat_avg_msec_pattern = re.compile(r'lat \(msec\):.*?avg=([\d\.]+)', re.DOTALL)
+lat_avg_usec_pattern = re.compile(r'lat \(usec\):.*?avg=([\d\.]+)', re.DOTALL)
+lat_avg_nsec_pattern = re.compile(r'lat \(nsec\):.*?avg=([\d\.]+)', re.DOTALL)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
     parser.add_argument('--metrics', type=str, required=True, help='JSON string of metrics to report')
     return parser.parse_args()
 
-# Convert values with suffixes (k, M, KiB, MiB) to appropriate units
 def convert_value(value):
-    if value.endswith('k'):
-        return float(value[:-1]) * 1e3
-    elif value.endswith('M'):
-        return float(value[:-1]) * 1e6
-    elif value.endswith('KiB/s'):
-        return float(value[:-5]) / 1024  # Convert KiB/s to MiB/s
-    elif value.endswith('MiB/s'):
-        return float(value[:-5])
-    elif value.endswith('KB/s'):
-        return float(value[:-4]) / 1024  # Convert KB/s to MiB/s
-    elif value.endswith('MB/s'):
-        return float(value[:-4])
+    if isinstance(value, str):
+        if value.endswith('k'):
+            return float(value[:-1]) * 1e3
+        elif value.endswith('M'):
+            return float(value[:-1]) * 1e6
+        elif value.endswith('KiB/s'):
+            return float(value[:-5]) / 1024  # Convert KiB/s to MiB/s
+        elif value.endswith('MiB/s'):
+            return float(value[:-5])
+        elif value.endswith('KB/s'):
+            return float(value[:-4]) / 1024  # Convert KB/s to MiB/s
+        elif value.endswith('MB/s'):
+            return float(value[:-4])
     return float(value)
 
 def extract_value(pattern, text):
@@ -51,14 +52,18 @@ def parse_benchmark_output(filepath):
 
         lat_match_msec = extract_value(lat_avg_msec_pattern, run)
         lat_match_usec = extract_value(lat_avg_usec_pattern, run)
+        lat_match_nsec = extract_value(lat_avg_nsec_pattern, run)
         
         if lat_match_msec:
             result['avg_latency'] = float(lat_match_msec)
         elif lat_match_usec:
             result['avg_latency'] = float(lat_match_usec) / 1000  # Convert usec to msec
+        elif lat_match_nsec:
+            result['avg_latency'] = float(lat_match_nsec) / 1000000  # Convert nsec to msec
         else:
-            continue  
-        
+            logging.warning(f"Could not find latency information in a run")
+            continue
+
         iops = extract_value(iops_pattern, run)
         bw = extract_value(bw_pattern, run)
         
@@ -69,67 +74,60 @@ def parse_benchmark_output(filepath):
 
     return results
 
-
 def process_files(output_folder, metrics):
     results = []
     percentiles_to_calculate = [int(metric.split()[0]) for metric in metrics if "percentile" in metric]
 
-    for test_lst in os.listdir(output_folder):
-        test_lst_path = os.path.join(output_folder, test_lst)
-        if os.path.isdir(test_lst_path):
-            for test_params_dir in os.listdir(test_lst_path):
-                test_params_path = os.path.join(test_lst_path, test_params_dir)
-                if os.path.isdir(test_params_path):
-                    params = test_params_dir.split('_')
-                    if len(params) < 7:
-                        logging.error(f"Unexpected directory name format: {test_params_dir}")
-                        continue
-                    
-                    block_sizes = params[0]
-                    numProc = params[1]
-                    size = params[2]
-                    runtime = params[3]
-                    direct = params[4]
-                    iodepth = params[5]
-                    io_engine = '_'.join(params[6:])
-                    
-                    combined_output_file = os.path.join(test_params_path, "combined_results.txt")
-                    parsed_outputs = parse_benchmark_output(combined_output_file)
-                    
-                    iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
-                    bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
-                    latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
+    for root, dirs, files in os.walk(output_folder):
+        for file in files:
+            if file == "combined_results.txt":
+                filepath = os.path.join(root, file)
+                logging.info(f"Processing file: {filepath}")
+                
+                parsed_outputs = parse_benchmark_output(filepath)
+                
+                if not parsed_outputs:
+                    logging.warning(f"No data extracted from {filepath}")
+                    continue
 
-                    avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
-                    avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
-                    avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
+                iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
+                bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
+                latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
 
-                    result = {
-                        'test_lst': test_lst,
-                        'block_sizes': block_sizes,
-                        'numProc': numProc,
-                        'size': size,
-                        'runtime': runtime,
-                        'direct': direct,
-                        'iodepth': iodepth,
-                        'io_engine': io_engine,
-                        'avg_latency': avg_latency,  # Always store avg_latency
-                    }
+                avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
+                avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
+                avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
 
-                    if "bandwidth" in metrics:
-                        result['bandwidth'] = avg_bw
-                    if "IOPS" in metrics:
-                        result['IOPS'] = avg_iops
+                # Extract test parameters from directory structure
+                params = os.path.basename(root).split('_')
+                if len(params) < 7:
+                    logging.error(f"Unexpected directory name format: {os.path.basename(root)}")
+                    continue
 
-                    logging.debug(f"latency list : {latency_list}")
+                result = {
+                    'test_lst': os.path.basename(os.path.dirname(root)),
+                    'block_sizes': params[0],
+                    'numProc': params[1],
+                    'size': params[2],
+                    'runtime': params[3],
+                    'direct': params[4],
+                    'iodepth': params[5],
+                    'io_engine': '_'.join(params[6:]),
+                    'avg_latency': avg_latency,
+                }
 
-                    if latency_list and percentiles_to_calculate:
-                        latency_distribution = np.array(latency_list)
-                        for percentile in percentiles_to_calculate:
-                            percentile_value = np.percentile(latency_distribution, percentile)
-                            result[f'{percentile}th_percentile_latency'] = percentile_value
+                if "bandwidth" in metrics:
+                    result['bandwidth'] = avg_bw
+                if "IOPS" in metrics:
+                    result['IOPS'] = avg_iops
 
-                    results.append(result)
+                if latency_list and percentiles_to_calculate:
+                    latency_distribution = np.array(latency_list)
+                    for percentile in percentiles_to_calculate:
+                        percentile_value = np.percentile(latency_distribution, percentile)
+                        result[f'{percentile}th_percentile_latency'] = percentile_value
+
+                results.append(result)
 
     return results
 
@@ -152,39 +150,40 @@ def save_to_csv(results, output_folder, metrics):
     
     output_file = os.path.join(output_folder, 'results.csv')
     
-    if not os.path.exists(output_file):
-        with open(output_file, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=required_fields)
-            writer.writeheader()
-    
-    with open(output_file, 'a', newline='') as f:
+    with open(output_file, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=required_fields)
+        writer.writeheader()
         for result in results:
-            row = {field: None for field in required_fields}
-            row.update({k: v for k, v in result.items() if k in required_fields})
+            row = {field: result.get(field, '') for field in required_fields}
             writer.writerow(row)
+    
+    logging.info(f"Results saved to {output_file}")
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
-    args = parse_arguments()
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
     try:
+        args = parse_arguments()
         metrics = json.loads(args.metrics)
     except json.JSONDecodeError as e:
         logging.error(f"Error parsing metrics: {e}")
         return
+    except Exception as e:
+        logging.error(f"Error parsing arguments: {e}")
+        return
 
     output_folder = os.path.join(os.path.dirname(__file__), 'output')
+    logging.info(f"Output folder: {output_folder}")
 
     try:
         results = process_files(output_folder, metrics)
     except Exception as e:
-        logging.error(f"Error processing files: {e}")
+        logging.error(f"Error processing files: {e}", exc_info=True)
         return
 
     try:
         save_to_csv(results, output_folder, metrics)
     except Exception as e:
-        logging.error(f"Error saving to CSV: {e}")
+        logging.error(f"Error saving to CSV: {e}", exc_info=True)
 
     print("Storage report.py successfully completed.")
 
