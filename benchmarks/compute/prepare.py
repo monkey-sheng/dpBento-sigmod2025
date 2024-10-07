@@ -24,6 +24,7 @@ def compile_exec():
     print('compiling compute benchmarks...')
     subprocess.run(f"gcc -o int32 {int_path}/int32.c", shell=True, check=True)
     subprocess.run(f"gcc -o int8 {int_path}/int8.c", shell=True, check=True)
+    subprocess.run(f"gcc -o int128 {int_path}/int128.c", shell=True, check=True)
     subprocess.run(f"gcc -o fp32 {fp_path}/fp32.c", shell=True, check=True)
     subprocess.run(f"gcc -o double {fp_path}/double.c", shell=True, check=True)
     print('compiled compute benchmarks')

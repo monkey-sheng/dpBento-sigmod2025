@@ -9,7 +9,7 @@ import pandas as pd
 NUM_OPS = 100000000  # this should match the constant in .c files
 OPS_PER_LOOP = 4  # this is kind of hardcoded in the .c files
 # VALID_BENCHMARK_ITEMS = ['matrix', 'int', 'float']
-VALID_BENCHMARK_ITEMS = ['int32', 'int8', 'fp32', 'double']
+VALID_BENCHMARK_ITEMS = ['int32', 'int8', 'fp32', 'double', 'int128']
 
 # ALL_METRICS_MATRIX = ['n_workers', 'matrix_size', 'total_ops', 'ops/s']
 # ALL_METRICS_INT = ['n_workers', 'data_size', 'total_ops', 'ops/s']
@@ -113,11 +113,6 @@ def parse_arguments():
 #     fp.write(','.join(map(str, [args.n_workers, args.data_size, bogo_ops, ops_per_sec])) + '\n')
 #     fp.close()
 
-# TODO string should be out side of compute
-def collect_results_string(output, args):
-    print(f"output: {output}")
-    print(f"args: {args}")
-
 def collect_results_compute(out: str, args, data_type):
     results_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../output/compute')
     os.makedirs(results_dir, exist_ok=True)
@@ -161,6 +156,9 @@ def run():
             if 'int8' in args.data_type:
                 output = subprocess.run(f"./int8", check=True, capture_output=True, shell=True, text=True).stdout
                 collect_results_compute(output, args, 'int8')
+            if 'int128' in args.data_type:
+                output = subprocess.run(f"./int128", check=True, capture_output=True, shell=True, text=True).stdout
+                collect_results_compute(output, args, 'int128')
         elif item == 'fp':
             if 'fp32' in args.data_type:
                 output = subprocess.run(f"./fp32", check=True, capture_output=True, shell=True, text=True).stdout
