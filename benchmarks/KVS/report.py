@@ -23,8 +23,8 @@ class ReportGenerator:
         extracted_metrics = {
             "latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
             "95latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
-            "99latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
-            "runtime(ms)": None,
+            # "99latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
+            # "runtime(ms)": None,
             "throughput(ops/sec)": None,
             "operationcount": None,
             "readproportion": None,
@@ -37,8 +37,8 @@ class ReportGenerator:
         # Use regular expressions to extract values
         for line in output_content.splitlines():
             # Extract overall runtime and throughput
-            if "[OVERALL], RunTime(ms)" in line:
-                extracted_metrics["runtime(ms)"] = int(re.search(r"\[OVERALL\], RunTime\(ms\), (\d+)", line).group(1))
+            # if "[OVERALL], RunTime(ms)" in line:
+            #     extracted_metrics["runtime(ms)"] = int(re.search(r"\[OVERALL\], RunTime\(ms\), (\d+)", line).group(1))
             if "[OVERALL], Throughput(ops/sec)" in line:
                 extracted_metrics["throughput(ops/sec)"] = float(re.search(r"\[OVERALL\], Throughput\(ops/sec\), ([\d.]+)", line).group(1))
 
@@ -55,10 +55,10 @@ class ReportGenerator:
                     if match_95th:
                         extracted_metrics["95latency(us)"][operation] = float(match_95th.group(1))
                         
-                    # 99th Percentile Latency
-                    match_99th = re.search(r"99thPercentileLatency\(us\), ([\d.]+)", line)
-                    if match_99th:
-                        extracted_metrics["99latency(us)"][operation] = float(match_99th.group(1))
+                    # # 99th Percentile Latency
+                    # match_99th = re.search(r"99thPercentileLatency\(us\), ([\d.]+)", line)
+                    # if match_99th:
+                    #     extracted_metrics["99latency(us)"][operation] = float(match_99th.group(1))
 
             # Extract operation count
             if "operationcount" in line:
