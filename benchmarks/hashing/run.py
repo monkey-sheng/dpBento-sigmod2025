@@ -4,6 +4,14 @@ import sys
 import json
 import os
 from datetime import datetime
+import os
+import subprocess
+import re
+import csv
+
+ITERATIONS = 1000000
+
+VALID_ITEMS = ['openssl_speed', 'doca_sha256']
 
 def generate_filename(args):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -73,6 +81,38 @@ def run_openssl_speed_test(args):
     print(f"Results saved to {output_file_path}")
     return True
 
+def run_doca_sha256(data_size):
+    root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    build_dir = os.path.join(this_dir, 'build')
+    exec_name = os.path.join(build_dir, 'doca_sha_create')
+    output_dir = os.path.join(root_dir, 'output', 'hashing')
+    result_file = os.path.join(output_dir, 'doca_result.csv')
+
+    os.makedirs(output_dir, exist_ok=True)
+    output = subprocess.run([exec_name, '-d', data_size], cwd=build_dir, capture_output=True, text=True).stdout
+
+    found = re.findall(r"total completion time: (.+)", output)
+    print(found[0])
+    completion_time = float(found[0])
+    throughput_mbps = float(data_size) * ITERATIONS / completion_time / 1024 / 1024
+    print(f"Throughput: {throughput_mbps} MB/s")
+
+    if not os.path.exists(result_file):
+        # write the columns header
+        fp = open(result_file, 'w')
+        writer = csv.writer(fp)
+        writer.writerow(["data_size", "throughput (MB/s)"])
+    else:
+        fp = open(result_file, 'a')
+        writer = csv.writer(fp)
+        
+
+    # Write the results
+    writer.writerow([data_size, throughput_mbps])
+    fp.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description='Run OpenSSL speed test')
     parser.add_argument('--algorithm', default='sha256', help='Hash algorithm')
@@ -85,6 +125,12 @@ def main():
     parser.add_argument('--metrics', type=json.loads, default=[], help='JSON string of metrics')
 
     args = parser.parse_args()
+
+    if 'openssl_speed' in args.benchmark_items:
+        run_openssl_speed_test(args)
+    if 'doca_sha256' in args.benchmark_items:
+        run_doca_sha256(args.bytes)
+
 
     if run_openssl_speed_test(args):
         sys.exit(0)
