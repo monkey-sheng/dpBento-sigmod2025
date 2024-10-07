@@ -2,74 +2,77 @@ import os
 import shutil
 import subprocess
 import logging
+import sys
 
 def run_command(command, check=True, shell=False):
     """Run a shell command."""
     logging.info(f"Running command: {' '.join(command)}")
-    subprocess.run(command, check=check, shell=shell)
+    try:
+        result = subprocess.run(command, check=check, shell=shell, text=True, capture_output=True)
+        logging.info(result.stdout)
+        if result.stderr:
+            logging.warning(result.stderr)
+        return result
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed with error: {e}")
+        logging.error(e.stdout)
+        logging.error(e.stderr)
+    except FileNotFoundError as e:
+        logging.error(f"Command not found: {e}")
 
 def remove_directory(path):
     """Remove the specified directory if it exists."""
     if os.path.exists(path):
-        shutil.rmtree(path)
-        logging.info(f"Removed directory: {path}")
+        try:
+            shutil.rmtree(path)
+            logging.info(f"Removed directory: {path}")
+        except Exception as e:
+            logging.error(f"Failed to remove directory {path}: {e}")
 
-def remove_package(package_name):
-    """Remove the specified package using apt."""
-    run_command(['sudo', 'apt', 'remove', '-y', package_name])
-    logging.info(f"Uninstalled package: {package_name}")
-
-def purge_package(package_name):
-    """Purge the specified package using apt."""
-    run_command(['sudo', 'apt', 'purge', '-y', package_name])
-    logging.info(f"Purged package: {package_name}")
-
-def autoremove_unused_dependencies():
-    """Remove any unused dependencies."""
-    run_command(['sudo', 'apt', 'autoremove', '-y'])
-    logging.info("Removed unused dependencies.")
-
-def clean_package_cache():
-    """Clean up package cache."""
-    run_command(['sudo', 'apt', 'clean'])
-    logging.info("Cleaned up package cache.")
+def find_pip_command():
+    """Find the appropriate pip command."""
+    for cmd in ['pip3', 'pip', 'python3 -m pip', 'python -m pip']:
+        try:
+            result = subprocess.run(f"{cmd} --version", shell=True, check=True, capture_output=True, text=True)
+            logging.info(f"Found pip: {cmd} ({result.stdout.strip()})")
+            return cmd
+        except:
+            pass
+    return None
 
 def uninstall_python_packages():
     """Uninstall Python packages used in the benchmark."""
     packages = ['numpy', 'pandas', 'matplotlib']
-    for package in packages:
-        run_command(['pip3', 'uninstall', '-y', package])
-        logging.info(f"Uninstalled Python package: {package}")
+    pip_command = find_pip_command()
+    if pip_command:
+        for package in packages:
+            run_command(f"{pip_command} uninstall -y {package}", shell=True)
+            logging.info(f"Attempted to uninstall Python package: {package}")
+    else:
+        logging.error("No pip command found. Unable to uninstall Python packages.")
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     
-    # Get the directory of the clean.py script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"Script directory: {script_dir}")
 
-    # Remove the output directory within the script directory
     output_path = os.path.join(script_dir, 'output')
     remove_directory(output_path)
 
-    # Uninstall packages
-    remove_package('sysbench')
-    remove_package('python3-pip')
+    # Check if sysbench is installed before trying to remove it
+    if run_command(['which', 'sysbench'], check=False).returncode == 0:
+        run_command(['sudo', 'apt', 'remove', '-y', 'sysbench'])
+        run_command(['sudo', 'apt', 'purge', '-y', 'sysbench'])
+    else:
+        logging.info("sysbench is not installed, skipping removal.")
 
-    # Purge packages
-    purge_package('sysbench')
-    purge_package('python3-pip')
-
-    # Uninstall Python packages
     uninstall_python_packages()
 
-    # Remove any unused dependencies
-    autoremove_unused_dependencies()
+    run_command(['sudo', 'apt', 'autoremove', '-y'])
+    run_command(['sudo', 'apt', 'clean'])
 
-    # Clean up package cache
-    clean_package_cache()
-
-    logging.info("Cleanup complete. All installed packages and output have been removed.")
+    logging.info("Cleanup complete. Attempted to remove all installed packages and output.")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,15 @@
+{
+    "benchmarks":
+    [
+        {
+            "benchmark_class": "compression",
+            "benchmark_items": ["default", "simd", "threading"],
+            "parameters": {
+                "data_size": [128],
+                "block_size": 1024,
+                "threads": 16
+            },
+            "metrics": ["throughput"]
+        }
+    ]
+}

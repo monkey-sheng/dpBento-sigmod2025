@@ -7,7 +7,7 @@
             "benchmark_class": "compute",
             "benchmark_items": ["fp", "int"],
             "parameters": {
-                "data_type": "int32,double,fp32"
+                "data_type": "int8,int128,double"
             },
             "metrics": ["data_type", "op_type", "ops/s"]
         }
