@@ -4,6 +4,7 @@ import argparse
 import logging
 import sys
 import os
+import shutil
 
 def uninstall_packages(packages):
     """Uninstall packages using pip."""
