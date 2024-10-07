@@ -1,0 +1,2 @@
+/home/jasonhu/dpBento/benchmarks/compression/128.gz filter=lfs diff=lfs merge=lfs -text
+/home/jasonhu/dpBento/benchmarks/compression/128.txt filter=lfs diff=lfs merge=lfs -text
