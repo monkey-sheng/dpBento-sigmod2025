@@ -91,7 +91,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run compression benchmark')
     parser.add_argument('--benchmark_items', help='Comma-separated list of benchmark items')
     parser.add_argument('--block_size', type=int, default=1, help='Block size in KB')
-    parser.add_argument('data_size', type=str, default=4, help='Data size')
+    parser.add_argument('--data_size', type=str, default=4, help='Data size')
     parser.add_argument('--threads', type=int, default=-1, help='Number of threads')
     args, _ = parser.parse_known_args()
 
