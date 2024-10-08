@@ -396,7 +396,7 @@ compress_deflate(const char *pci_addr, char *file_data, size_t file_size, enum d
 	clock_gettime(CLOCK_MONOTONIC, &completed);
 	elapsed_complete = completed.tv_sec - submit_end.tv_sec;
 	elapsed_complete += (completed.tv_nsec - submit_end.tv_nsec) / 1000000000.0;
-	printf("completion time: %.5f, total = %f\n", elapsed_complete, elapsed_complete + elpased_submit);
+	printf("completion time: %.9f, total = %.9f\n", elapsed_complete, elapsed_complete + elpased_submit);
 
 
 
