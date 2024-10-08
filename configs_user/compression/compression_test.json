@@ -3,7 +3,7 @@
     [
         {
             "benchmark_class": "compression",
-            "benchmark_items": ["default", "simd", "threading"],
+            "benchmark_items": ["simd-single", "simd-multi", "threading"],
             "parameters": {
                 "data_size": ["1", "1K", "4K", "16K", "64K", "256K", "1M", "4M", "16M", "64M", "256M"],
                 "block_size": 1024,

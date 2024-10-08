@@ -13,7 +13,7 @@ from zlib_ng import gzip_ng_threaded, gzip_ng
 import zlib
 from time import perf_counter_ns
 
-VALID_ITEMS = ['default', 'simd', 'threading', 'doca']
+VALID_ITEMS = ['default', 'simd-single', 'simd-multi', 'threading', 'doca']
 
 def write_results(type, data_size, bs, threads, latency):
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'output', 'compression')
@@ -55,7 +55,7 @@ def default_compress(data_size, block_size, threads):
 
     write_results('default', data_size, block_size, 1, elapsed_ms)
 
-def simd_compress(data_size, block_size, threads):
+def simd_compress_single(data_size, block_size, threads):
     buf = io.BytesIO()
     fname = create_tmp_file(data_size)
     txt = open(fname, 'rb').read()
@@ -73,7 +73,27 @@ def simd_compress(data_size, block_size, threads):
     # print('fsize:', fsize)
     # throughput = fsize / elapsed_ms / 1024
     # print(f"SIMD throughput: {throughput} MB/s")
-    write_results('simd', data_size, block_size, 1, elapsed_ms)
+    write_results('simd-single', data_size, block_size, 1, elapsed_ms)
+
+def simd_compress_multi(data_size, block_size, threads):
+    buf = io.BytesIO()
+    fname = create_tmp_file(data_size)
+    txt = open(fname, 'rb').read()
+    
+    # start = perf_counter_ns()
+    fp = gzip_ng_threaded.open(buf, 'w', threads=threads, block_size=block_size)
+    start = perf_counter_ns()
+    r=fp.write(txt)
+    end = perf_counter_ns()
+
+    elapsed_ms = (end - start) / 1_000_000
+
+    # # get file size
+    # fsize = os.path.getsize(fname)
+    # print('fsize:', fsize)
+    # throughput = fsize / elapsed_ms / 1024
+    # print(f"SIMD throughput: {throughput} MB/s")
+    write_results('simd-multi', data_size, block_size, threads, elapsed_ms)
 
 def threading_compress(data_size, block_size, threads):
     buf = io.BytesIO()
@@ -128,8 +148,10 @@ def main():
     for item in items:
         if item == 'default':
             default_compress(data_size, block_size, args.threads)
-        elif item == 'simd':
-            simd_compress(data_size, block_size, args.threads)
+        elif item == 'simd-single':
+            simd_compress_single(data_size, block_size, args.threads)
+        elif item == 'simd-multi':
+            simd_compress_multi(data_size, block_size, args.threads)
         elif item == 'threading':
             threading_compress(data_size, block_size, args.threads)
         elif item == 'doca':
