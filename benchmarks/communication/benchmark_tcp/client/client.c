@@ -293,22 +293,22 @@ int main(int argc, const char **argv) {
   fseek(fp, 0, SEEK_END);
   if (ftell(fp) == 0 && isBW) {
     fprintf(fp, "requests, bytes, threads, RPS, StdErr, Min, Max, Avg, 50th, "
-                "90th, 99th, 99.9th, 99.99th, throughput(Mbps)\n");
+                "90th, 95th, 99th, 99.9th, 99.99th, throughput(Mbps)\n");
   } else if (ftell(fp) == 0 && !isBW) {
     fprintf(fp, "requests, bytes, threads, RPS, StdErr, Min, Max, Avg, 50th, "
-                "90th, 99th, 99.9th, 99.99th\n");
+                "90th, 95th, 99th, 99.9th, 99.99th\n");
   }
 
   if (isBW) {
     switch (target_metric) {
     case 1:
       fprintf(fp,
-              "%d, %d, %d, %.2lf, %.2lf, %.2lf, %.2lf, %.2f, %.2lf, %.2lf, "
+              "%d, %d, %d, %.2lf, %.2lf, %.2lf, %.2lf, %.2f, %.2lf, %.2lf, %.2lf, "
               "%.2lf, %.2lf, %.2lf, %.2Lf\n",
               total_requests, file_size, num_threads,
               ((size_t)total_requests / total_latency * 1000000),
               LatencyStats.StandardError, LatencyStats.Min, LatencyStats.Max,
-              total_latency / total_requests, PercentileStats.P50,
+              total_latency / total_requests, PercentileStats.P50, PercentileStats.P95,
               PercentileStats.P90, PercentileStats.P99, PercentileStats.P99p9,
               PercentileStats.P99p99,
               (long double) (8 * file_size) / (total_latency / total_requests));

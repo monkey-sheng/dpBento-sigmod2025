@@ -8,7 +8,7 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
-def parse_rdma_output(metrics, data_size):
+def parse_rdma_output(metrics):
     
     without_bw = [metric for metric in metrics if metric != "bandwidth"]
         

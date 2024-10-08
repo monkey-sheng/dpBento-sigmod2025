@@ -6,12 +6,9 @@ import csv
 import logging
 import numpy as np
 
-# Regular expression patterns
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
-bw_pattern = re.compile(r'bw=([\d.]+[kM]?[KM]?iB/s)')
-lat_avg_msec_pattern = re.compile(r'lat \(msec\):.*?avg=([\d\.]+)', re.DOTALL)
-lat_avg_usec_pattern = re.compile(r'lat \(usec\):.*?avg=([\d\.]+)', re.DOTALL)
-lat_avg_nsec_pattern = re.compile(r'lat \(nsec\):.*?avg=([\d\.]+)', re.DOTALL)
+bw_pattern = re.compile(r'BW=([\d.]+[kM]?[KM]?iB/s)')
+lat_pattern = re.compile(r'lat \((nsec|usec|msec)\).*?avg=\s*([\d.]+)', re.DOTALL)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
@@ -50,16 +47,15 @@ def parse_benchmark_output(filepath):
     for run in runs[1:]:  # Skip the first split part before 'Run1'
         result = {}
 
-        lat_match_msec = extract_value(lat_avg_msec_pattern, run)
-        lat_match_usec = extract_value(lat_avg_usec_pattern, run)
-        lat_match_nsec = extract_value(lat_avg_nsec_pattern, run)
-        
-        if lat_match_msec:
-            result['avg_latency'] = float(lat_match_msec)
-        elif lat_match_usec:
-            result['avg_latency'] = float(lat_match_usec) / 1000  # Convert usec to msec
-        elif lat_match_nsec:
-            result['avg_latency'] = float(lat_match_nsec) / 1000000  # Convert nsec to msec
+        lat_match = lat_pattern.search(run)
+        if lat_match:
+            unit, value = lat_match.groups()
+            if unit == 'nsec':
+                result['avg_latency'] = float(value) / 1e6  # Convert nsec to msec
+            elif unit == 'usec':
+                result['avg_latency'] = float(value) / 1e3  # Convert usec to msec
+            else:
+                result['avg_latency'] = float(value)  # Already in msec
         else:
             logging.warning(f"Could not find latency information in a run")
             continue

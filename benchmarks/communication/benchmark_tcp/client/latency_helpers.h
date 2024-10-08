@@ -16,6 +16,7 @@ typedef struct Statistics {
 typedef struct Percentiles {
 	double P50;
 	double P90;
+	double P95;
 	double P99;
 	double P99p9;
 	double P99p99;
@@ -138,6 +139,9 @@ GetStatistics(
 
 	PercentileIndex = (uint32_t)(DataLength * 0.9);
 	PercentileStats->P90 = Data[PercentileIndex];
+
+	PercentileIndex = (uint32_t)(DataLength * 0.95);
+	PercentileStats->P95 = Data[PercentileIndex];
 
 	PercentileIndex = (uint32_t)(DataLength * 0.99);
 	PercentileStats->P99 = Data[PercentileIndex];

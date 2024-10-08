@@ -12,11 +12,11 @@ INSERT = 2
 SCAN = 3
 
 class KVSRunner(Runner):
-    def __init__(self, args):
+    def __init__(self, args, dir):
         super().__init__(args)
         current_dir = os.path.dirname(__file__)
         parent_dir = os.path.dirname(current_dir)
-        self.output_dir = os.path.join(parent_dir, 'KVS', 'output')
+        self.output_dir = os.path.join(parent_dir, dir, 'output')
         if not os.path.exists(self.output_dir):
             try:
                 os.makedirs(self.output_dir, exist_ok=True)
@@ -63,14 +63,15 @@ class KVSRunner(Runner):
         
         return config_file
 
-    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type):
+    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type, dir):
         # Step 1: Generate the workload configuration
         parent_dir = os.path.dirname(os.path.abspath(__file__))
         gp_dir = os.path.dirname(parent_dir)
-        ycsb_dir = os.path.join(gp_dir, 'KVS', 'YCSB')
+        ycsb_dir = os.path.join(gp_dir, dir, 'YCSB')
         os.chdir(ycsb_dir)
         config_file = self.generate_workload_config(operation_size, operation_type, data_distribution_type)
         
+        print(config_file)
         # Step 2: Load the data into RocksDB
         load_command = f"./bin/ycsb load rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data"
         logging.info(f"Loading data with command: {load_command}")
