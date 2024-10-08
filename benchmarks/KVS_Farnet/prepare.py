@@ -27,10 +27,9 @@ def define_paths():
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Define the relative paths for the .jar file and YCSB directory
-    jar_path = os.path.join(script_dir, 'rocksdbjni-7.0.1-linux64.jar')
     ycsb_path = os.path.join(script_dir, 'YCSB')
 
-    return jar_path, ycsb_path
+    return ycsb_path
 
 def package_ycsb(ycsb_path):
     # Change to the YCSB directory and run the mvn command to package
@@ -50,7 +49,7 @@ def main():
     git_lfs_setup()
 
     # Step 3: Define paths for the jar file and YCSB directory
-    jar_path, ycsb_path = define_paths()
+    ycsb_path = define_paths()
 
     # Step 4: Build YCSB rocksdb-binding
     package_ycsb(ycsb_path)
