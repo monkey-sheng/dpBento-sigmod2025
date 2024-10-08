@@ -14,25 +14,6 @@ def install_packages():
 def define_paths():
     # Get the directory where the current script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Define the relative paths for the .jar file and YCSB directory
-    jar_path = os.path.join(script_dir, 'rocksdbjni-7.0.1-linux64.jar')
-    ycsb_path = os.path.join(script_dir, 'YCSB')
-    return jar_path, ycsb_path
-
-def git_lfs_setup():
-    # Initialize Git LFS and pull LFS files
-    try:
-        subprocess.run(["git", "lfs", "install"], check=True)
-        print("Git LFS installed.")
-        subprocess.run(["git", "lfs", "pull"], check=True)
-        print("Git LFS files pulled.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred with Git LFS: {e}")
-        sys.exit(1)
-
-def define_paths():
-    # Get the directory where the current script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Define the relative paths for the .jar file and YCSB directory
     ycsb_path = os.path.join(script_dir, 'YCSB')
@@ -52,7 +33,8 @@ def package_ycsb(ycsb_path):
 def main():
     # Step 1: Install necessary packages
     install_packages()
-    git_lfs_setup()
+
+    
 
     # Step 3: Define paths for the jar file and YCSB directory
     ycsb_path = define_paths()
