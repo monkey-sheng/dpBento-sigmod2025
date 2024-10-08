@@ -42,7 +42,7 @@ def create_tmp_file(data_size: str):
     os.makedirs(build_dir, exist_ok=True)
     tmp_file = os.path.join(this_dir, f'tmp.txt')
     subprocess.run(['cp', txt_file, tmp_file])
-    subprocess.run(['truncate', '-s', data_size, tmp_file])
+    subprocess.run(['truncate', '-s', data_size, tmp_file], cwd=this_dir, check=True)
     return tmp_file
 
 def default_compress(data_size, block_size, threads):
@@ -61,7 +61,7 @@ def simd_compress(data_size, block_size, threads):
     txt = open(fname, 'rb').read()
     
     # start = perf_counter_ns()
-    fp = gzip_ng_threaded.open(buf, 'w', threads=0, block_size=block_size)
+    fp = gzip_ng_threaded.open(buf, 'w', threads=threads, block_size=block_size)
     start = perf_counter_ns()
     r=fp.write(txt)
     end = perf_counter_ns()
