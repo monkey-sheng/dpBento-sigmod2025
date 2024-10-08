@@ -11,17 +11,6 @@ def install_packages():
         print(f"Error occurred during installation: {e}")
         sys.exit(1)
 
-def git_lfs_setup():
-    # Initialize Git LFS and pull LFS files
-    try:
-        subprocess.run(["git", "lfs", "install"], check=True)
-        print("Git LFS installed.")
-        subprocess.run(["git", "lfs", "pull"], check=True)
-        print("Git LFS files pulled.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred with Git LFS: {e}")
-        sys.exit(1)
-
 def define_paths():
     # Get the directory where the current script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -45,8 +34,7 @@ def main():
     # Step 1: Install necessary packages
     install_packages()
 
-    # Step 2: Setup Git LFS and pull large files
-    git_lfs_setup()
+    
 
     # Step 3: Define paths for the jar file and YCSB directory
     ycsb_path = define_paths()
