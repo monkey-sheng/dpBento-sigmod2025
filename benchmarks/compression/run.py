@@ -13,7 +13,7 @@ from zlib_ng import gzip_ng_threaded, gzip_ng
 import zlib
 from time import perf_counter_ns
 
-VALID_ITEMS = ['default', 'simd-single', 'simd-multi', 'threading', 'doca']
+VALID_ITEMS = ['default', 'threaded-single', 'single', 'threading', 'doca']
 
 def write_results(type, data_size, bs, threads, latency):
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'output', 'compression')
