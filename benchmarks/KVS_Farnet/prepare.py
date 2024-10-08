@@ -30,21 +30,14 @@ def git_lfs_setup():
         print(f"Error occurred with Git LFS: {e}")
         sys.exit(1)
 
-def install_rocksdb_jar(jar_path):
-    # Run the maven install:install-file command to install the rocksdbjni jar
-    try:
-        subprocess.run([
-            "mvn", "install:install-file", 
-            f"-Dfile={jar_path}",
-            "-DgroupId=org.rocksdb",
-            "-DartifactId=rocksdbjni",
-            "-Dversion=7.0.1",
-            "-Dpackaging=jar"
-        ], check=True)
-        print("rocksdbjni JAR file installed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred during jar installation: {e}")
-        sys.exit(1)
+def define_paths():
+    # Get the directory where the current script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Define the relative paths for the .jar file and YCSB directory
+    ycsb_path = os.path.join(script_dir, 'YCSB')
+
+    return ycsb_path
 
 def package_ycsb(ycsb_path):
     # Change to the YCSB directory and run the mvn command to package
@@ -60,11 +53,11 @@ def main():
     # Step 1: Install necessary packages
     install_packages()
     git_lfs_setup()
-    # Step 2: Define paths for the jar file and YCSB directory
-    jar_path, ycsb_path = define_paths()
+
+    # Step 3: Define paths for the jar file and YCSB directory
+    ycsb_path = define_paths()
 
     # Step 3: Install rocksdbjni JAR file using Maven
-    install_rocksdb_jar(jar_path)
     # Step 4: Build YCSB rocksdb-binding
     package_ycsb(ycsb_path)
 if __name__ == "__main__":
