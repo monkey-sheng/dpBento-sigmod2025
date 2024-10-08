@@ -64,6 +64,7 @@ def threaded_compress_single(data_size, block_size, threads):
     fp = gzip_ng_threaded.open(buf, 'w', threads=1, block_size=block_size)
     start = perf_counter_ns()
     r=fp.write(txt)
+    fp.flush()
     end = perf_counter_ns()
 
     elapsed_ms = (end - start) / 1_000_000
@@ -84,6 +85,7 @@ def compress_single(data_size, block_size, threads):
     fp = gzip_ng_threaded.open(buf, 'w', threads=0, block_size=block_size)
     start = perf_counter_ns()
     r=fp.write(txt)
+    fp.flush()
     end = perf_counter_ns()
 
     elapsed_ms = (end - start) / 1_000_000
@@ -102,9 +104,10 @@ def threading_compress(data_size, block_size, threads):
     txt = open(fname, 'rb').read()
     
     # start = perf_counter_ns()
-    fp2 = gzip_ng_threaded.open(buf, 'w', threads=threads, block_size=block_size)
+    fp = gzip_ng_threaded.open(buf, 'w', threads=threads, block_size=block_size)
     start = perf_counter_ns()
-    fp2.write(txt)
+    fp.write(txt)
+    fp.flush()
     end = perf_counter_ns()
 
     elapsed_ms = (end - start) / 1_000_000
