@@ -5,7 +5,7 @@ import sys
 def install_packages():
     # Install maven and openjdk-8-jdk
     try:
-        subprocess.run(["sudo", "apt", "install", "-y", "maven", "openjdk-8-jdk","git-lfs"], check=True)
+        subprocess.run(["sudo", "apt", "install", "-y", "maven", "openjdk-8-jdk","git-lfs", "python-is-python3"], check=True)
         print("Maven successfully installed.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred during installation: {e}")
