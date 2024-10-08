@@ -73,7 +73,7 @@ def threaded_compress_single(data_size, block_size, threads):
     # print('fsize:', fsize)
     # throughput = fsize / elapsed_ms / 1024
     # print(f"SIMD throughput: {throughput} MB/s")
-    write_results('simd-single', data_size, block_size, 1, elapsed_ms)
+    write_results('threded-single', data_size, block_size, 1, elapsed_ms)
 
 def compress_single(data_size, block_size, threads):
     buf = io.BytesIO()
