@@ -15,6 +15,6 @@ if __name__ == '__main__':
     args = parser.parse_arguments()
     args.operation_type = json.loads(args.operation_type)
     
-
+    dir = "KVS_Farnet"
     kvs_runner = KVSRunner(args)
-    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type)
+    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type, dir)
