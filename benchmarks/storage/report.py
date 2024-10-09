@@ -8,7 +8,7 @@ import numpy as np
 
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
 bw_pattern = re.compile(r'BW=([\d.]+[kM]?[KM]?iB/s)')
-lat_pattern = re.compile(r'lat \((nsec|usec|msec)\).*?avg=\s*([\d.]+)', re.DOTALL)
+lat_pattern = re.compile(r'^\s*lat\s+\((\w+)\):\s*min=[\d.]+,\s*max=[\d.]+,\s*avg=([\d.]+),\s*stdev=[\d.]+', re.MULTILINE)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
