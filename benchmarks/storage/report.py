@@ -81,61 +81,72 @@ def process_files(output_folder, metrics):
     results = []
     percentiles_to_calculate = [int(metric.split()[0]) for metric in metrics if "percentile" in metric]
 
-    for root, dirs, files in os.walk(output_folder):
-        for file in files:
-            if file == "combined_results.txt":
-                filepath = os.path.join(root, file)
-                logging.info(f"Processing file: {filepath}")
-                
-                parsed_outputs = parse_benchmark_output(filepath)
-                
-                if not parsed_outputs:
-                    logging.warning(f"No data extracted from {filepath}")
-                    continue
+    for test_type in ['randread', 'randwrite', 'read', 'write']:
+        test_type_dir = os.path.join(output_folder, test_type)
+        if not os.path.isdir(test_type_dir):
+            continue
 
-                iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
-                bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
-                latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
+        for dir_name in os.listdir(test_type_dir):
+            dir_path = os.path.join(test_type_dir, dir_name)
+            if not os.path.isdir(dir_path):
+                continue
 
-                avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
-                avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
-                avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
+            filepath = os.path.join(dir_path, "combined_results.txt")
+            if not os.path.exists(filepath):
+                logging.warning(f"combined_results.txt not found in {dir_path}")
+                continue
 
-                # Extract test parameters from directory structure
-                test_params = os.path.basename(root).split('_')
-                if len(test_params) < 2:
-                    logging.error(f"Unexpected directory name format: {os.path.basename(root)}")
-                    continue
+            logging.info(f"Processing file: {filepath}")
+            
+            parsed_outputs = parse_benchmark_output(filepath)
+            
+            if not parsed_outputs:
+                logging.warning(f"No data extracted from {filepath}")
+                continue
 
-                test_type = test_params[0]
-                block_size = test_params[1]
+            iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
+            bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
+            latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
 
-                result = {
-                    'test_lst': os.path.basename(os.path.dirname(root)),
-                    'test_type': test_type,
-                    'block_sizes': block_size,
-                    'numProc': test_params[2] if len(test_params) > 2 else '',
-                    'size': test_params[3] if len(test_params) > 3 else '',
-                    'runtime': test_params[4] if len(test_params) > 4 else '',
-                    'direct': test_params[5] if len(test_params) > 5 else '',
-                    'iodepth': test_params[6] if len(test_params) > 6 else '',
-                    'io_engine': '_'.join(test_params[7:]) if len(test_params) > 7 else '',
-                    'avg_latency': avg_latency,
-                }
+            avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
+            avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
+            avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
 
-                if "bandwidth" in metrics:
-                    result['bandwidth'] = avg_bw
-                if "IOPS" in metrics:
-                    result['IOPS'] = avg_iops
+            # Parse directory name for parameters
+            params_match = re.match(r'(\w+)_(\d+)_(\w+)_(\w+)_(\d+)_(\d+)_(.+)', dir_name)
+            
+            if not params_match:
+                logging.error(f"Unexpected directory name format: {dir_name}")
+                continue
 
-                if latency_list and percentiles_to_calculate:
-                    latency_distribution = np.array(latency_list)
-                    for percentile in percentiles_to_calculate:
-                        percentile_value = np.percentile(latency_distribution, percentile)
-                        result[f'{percentile}th_percentile_latency'] = percentile_value
+            block_size, numProc, size, runtime, direct, iodepth, io_engine = params_match.groups()
 
-                results.append(result)
-                logging.info(f"Processed test: {test_type}, block size: {block_size}")
+            result = {
+                'test_lst': 'storage',  # Assuming 'storage' is the top-level directory
+                'test_type': test_type,
+                'block_sizes': block_size,
+                'numProc': numProc,
+                'size': size,
+                'runtime': runtime,
+                'direct': direct,
+                'iodepth': iodepth,
+                'io_engine': io_engine,
+                'avg_latency': avg_latency,
+            }
+
+            if "bandwidth" in metrics:
+                result['bandwidth'] = avg_bw
+            if "IOPS" in metrics:
+                result['IOPS'] = avg_iops
+
+            if latency_list and percentiles_to_calculate:
+                latency_distribution = np.array(latency_list)
+                for percentile in percentiles_to_calculate:
+                    percentile_value = np.percentile(latency_distribution, percentile)
+                    result[f'{percentile}th_percentile_latency'] = percentile_value
+
+            results.append(result)
+            logging.info(f"Processed test: {test_type}, block size: {block_size}, io_engine: {io_engine}")
 
     return results
 
