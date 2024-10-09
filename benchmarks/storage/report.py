@@ -8,7 +8,9 @@ import numpy as np
 
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
 bw_pattern = re.compile(r'BW=([\d.]+[kM]?[KM]?iB/s)')
-lat_pattern = re.compile(r'^\s*lat\s+\((\w+)\):\s*min=[\d.]+,\s*max=[\d.]+,\s*avg=([\d.]+),\s*stdev=[\d.]+', re.MULTILINE)
+lat_avg_msec_pattern = re.compile(r'clat.*?lat \(msec\):.*?avg=([\d\.]+)', re.DOTALL)
+lat_avg_usec_pattern = re.compile(r'clat.*?lat \(usec\):.*?avg=([\d\.]+)', re.DOTALL)
+lat_avg_nsec_pattern = re.compile(r'clat.*?lat \(nsec\):.*?avg=([\d\.]+)', re.DOTALL)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
@@ -47,18 +49,23 @@ def parse_benchmark_output(filepath):
     for run in runs[1:]:  # Skip the first split part before 'Run1'
         result = {}
 
-        lat_match = lat_pattern.search(run)
+        # Try to match latency in msec
+        lat_match = lat_avg_msec_pattern.search(run)
         if lat_match:
-            unit, value = lat_match.groups()
-            if unit == 'nsec':
-                result['avg_latency'] = float(value) / 1e6  # Convert nsec to msec
-            elif unit == 'usec':
-                result['avg_latency'] = float(value) / 1e3  # Convert usec to msec
-            else:
-                result['avg_latency'] = float(value)  # Already in msec
+            result['avg_latency'] = float(lat_match.group(1))
         else:
-            logging.warning(f"Could not find latency information in a run")
-            continue
+            # Try to match latency in usec
+            lat_match = lat_avg_usec_pattern.search(run)
+            if lat_match:
+                result['avg_latency'] = float(lat_match.group(1)) / 1e3  # Convert usec to msec
+            else:
+                # Try to match latency in nsec
+                lat_match = lat_avg_nsec_pattern.search(run)
+                if lat_match:
+                    result['avg_latency'] = float(lat_match.group(1)) / 1e6  # Convert nsec to msec
+                else:
+                    logging.warning(f"Could not find latency information in a run")
+                    continue
 
         iops = extract_value(iops_pattern, run)
         bw = extract_value(bw_pattern, run)
@@ -95,20 +102,24 @@ def process_files(output_folder, metrics):
                 avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
 
                 # Extract test parameters from directory structure
-                params = os.path.basename(root).split('_')
-                if len(params) < 7:
+                test_params = os.path.basename(root).split('_')
+                if len(test_params) < 2:
                     logging.error(f"Unexpected directory name format: {os.path.basename(root)}")
                     continue
 
+                test_type = test_params[0]
+                block_size = test_params[1]
+
                 result = {
                     'test_lst': os.path.basename(os.path.dirname(root)),
-                    'block_sizes': params[0],
-                    'numProc': params[1],
-                    'size': params[2],
-                    'runtime': params[3],
-                    'direct': params[4],
-                    'iodepth': params[5],
-                    'io_engine': '_'.join(params[6:]),
+                    'test_type': test_type,
+                    'block_sizes': block_size,
+                    'numProc': test_params[2] if len(test_params) > 2 else '',
+                    'size': test_params[3] if len(test_params) > 3 else '',
+                    'runtime': test_params[4] if len(test_params) > 4 else '',
+                    'direct': test_params[5] if len(test_params) > 5 else '',
+                    'iodepth': test_params[6] if len(test_params) > 6 else '',
+                    'io_engine': '_'.join(test_params[7:]) if len(test_params) > 7 else '',
                     'avg_latency': avg_latency,
                 }
 
@@ -124,11 +135,12 @@ def process_files(output_folder, metrics):
                         result[f'{percentile}th_percentile_latency'] = percentile_value
 
                 results.append(result)
+                logging.info(f"Processed test: {test_type}, block size: {block_size}")
 
     return results
 
 def save_to_csv(results, output_folder, metrics):
-    base_fields = ['test_lst', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine']
+    base_fields = ['test_lst', 'test_type', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine']
     
     metric_fields_map = {
         'avg_latency': 'avg_latency',
