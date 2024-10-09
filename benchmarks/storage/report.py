@@ -8,9 +8,7 @@ import numpy as np
 
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
 bw_pattern = re.compile(r'BW=([\d.]+[kM]?[KM]?iB/s)')
-lat_avg_msec_pattern = re.compile(r'clat.*?lat \(msec\):.*?avg=([\d\.]+)', re.DOTALL)
-lat_avg_usec_pattern = re.compile(r'clat.*?lat \(usec\):.*?avg=([\d\.]+)', re.DOTALL)
-lat_avg_nsec_pattern = re.compile(r'clat.*?lat \(nsec\):.*?avg=([\d\.]+)', re.DOTALL)
+lat_pattern = re.compile(r'^\s*lat \((\w+)\):\s*min=[\d.]+,\s*max=[\d.]+,\s*avg=([\d.]+),\s*stdev=[\d.]+', re.MULTILINE)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
@@ -49,23 +47,27 @@ def parse_benchmark_output(filepath):
     for run in runs[1:]:  # Skip the first split part before 'Run1'
         result = {}
 
-        # Try to match latency in msec
-        lat_match = lat_avg_msec_pattern.search(run)
-        if lat_match:
-            result['avg_latency'] = float(lat_match.group(1))
-        else:
-            # Try to match latency in usec
-            lat_match = lat_avg_usec_pattern.search(run)
+        # Find the section containing clat and lat information
+        clat_lat_section = re.search(r'clat.*?lat.*?clat percentiles', run, re.DOTALL)
+        if clat_lat_section:
+            lat_match = lat_pattern.search(clat_lat_section.group())
             if lat_match:
-                result['avg_latency'] = float(lat_match.group(1)) / 1e3  # Convert usec to msec
-            else:
-                # Try to match latency in nsec
-                lat_match = lat_avg_nsec_pattern.search(run)
-                if lat_match:
-                    result['avg_latency'] = float(lat_match.group(1)) / 1e6  # Convert nsec to msec
+                unit, value = lat_match.groups()
+                if unit == 'nsec':
+                    result['avg_latency'] = float(value) / 1e6  # Convert nsec to msec
+                elif unit == 'usec':
+                    result['avg_latency'] = float(value) / 1e3  # Convert usec to msec
+                elif unit == 'msec':
+                    result['avg_latency'] = float(value)  # Already in msec
                 else:
-                    logging.warning(f"Could not find latency information in a run")
+                    logging.warning(f"Unknown latency unit: {unit}")
                     continue
+            else:
+                logging.warning(f"Could not find lat information in the clat-lat section")
+                continue
+        else:
+            logging.warning(f"Could not find clat-lat section in a run")
+            continue
 
         iops = extract_value(iops_pattern, run)
         bw = extract_value(bw_pattern, run)
