@@ -15,8 +15,8 @@ from time import perf_counter_ns
 
 VALID_ITEMS = ['default', 'threaded-single', 'single', 'threading', 'doca']
 
-def write_results(type, data_size, bs, threads, latency):
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'output', 'compression')
+def write_results(type, data_size, bs, threads, latency, operation='compression'):
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'output', operation)
     os.makedirs(output_dir, exist_ok=True)
     output_filename = "results.csv"
     result_file = os.path.join(output_dir, output_filename)
@@ -114,6 +114,65 @@ def threading_compress(data_size, block_size, threads):
     
     write_results('threading (max)', data_size, block_size, threads, elapsed_ms)
 
+
+############## decompress ####################
+def threaded_decompress_single(data_size, block_size, threads):
+    data_name =f'{data_size}.txt.gz'
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    fname = os.path.join(this_dir, data_name)
+    
+    # start = perf_counter_ns()
+    fp = gzip_ng_threaded.open(fname, 'rb', threads=1, block_size=block_size)
+    start = perf_counter_ns()
+    r=fp.read()
+    fp.flush()
+    end = perf_counter_ns()
+
+    elapsed_ms = (end - start) / 1_000_000
+
+    # # get file size
+    # fsize = os.path.getsize(fname)
+    # print('fsize:', fsize)
+    # throughput = fsize / elapsed_ms / 1024
+    # print(f"SIMD throughput: {throughput} MB/s")
+    write_results('threaded-single', data_size, block_size, 1, elapsed_ms, operation='decompression')
+
+def decompress_single(data_size, block_size, threads):
+    data_name =f'{data_size}.txt.gz'
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    fname = os.path.join(this_dir, data_name)    
+
+    fp = gzip_ng_threaded.open(fname, 'rb', threads=0, block_size=block_size)
+    start = perf_counter_ns()
+    r=fp.read()
+    fp.flush()
+    end = perf_counter_ns()
+
+    elapsed_ms = (end - start) / 1_000_000
+
+    # # get file size
+    # fsize = os.path.getsize(fname)
+    # print('fsize:', fsize)
+    # throughput = fsize / elapsed_ms / 1024
+    # print(f"SIMD throughput: {throughput} MB/s")
+    write_results('single', data_size, block_size, 1, elapsed_ms, operation='decompression')
+
+def threading_compress(data_size, block_size, threads):
+    data_name =f'{data_size}.txt.gz'
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    fname = os.path.join(this_dir, data_name)
+    
+    # start = perf_counter_ns()
+    fp = gzip_ng_threaded.open(fname, 'rb', threads=threads, block_size=block_size)
+    start = perf_counter_ns()
+    fp.read()
+    fp.flush()
+    end = perf_counter_ns()
+
+    elapsed_ms = (end - start) / 1_000_000
+    
+    write_results('threading (max)', data_size, block_size, threads, elapsed_ms, operation='decompression')
+
 def doca_compress(data_size: str):
     root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
     this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -140,6 +199,7 @@ def doca_compress(data_size: str):
 def main():
     parser = argparse.ArgumentParser(description='Run compression benchmark')
     parser.add_argument('--benchmark_items', help='Comma-separated list of benchmark items')
+    parser.add_argument('--operation', type=str, default='compression', help='Operation type')
     parser.add_argument('--block_size', type=int, default=1, help='Block size in KB')
     parser.add_argument('--data_size', type=str, default='4K', help='Data size')
     parser.add_argument('--threads', type=int, default=-1, help='Number of threads')
@@ -149,18 +209,32 @@ def main():
     block_size = args.block_size * 1024
     data_size = args.data_size
     for item in items:
-        if item == 'default':
-            default_compress(data_size, block_size, args.threads)
-        elif item == 'threaded-single':
-            threaded_compress_single(data_size, block_size, args.threads)
-        elif item == 'single':
-            compress_single(data_size, block_size, args.threads)
-        elif item == 'threading':
-            threading_compress(data_size, block_size, args.threads)
-        elif item == 'doca':
-            doca_compress(data_size)
+        if args.operation == 'compress':
+            if item == 'default':
+                default_compress(data_size, block_size, args.threads)
+            elif item == 'threaded-single':
+                threaded_compress_single(data_size, block_size, args.threads)
+            elif item == 'single':
+                compress_single(data_size, block_size, args.threads)
+            elif item == 'threading':
+                threading_compress(data_size, block_size, args.threads)
+            elif item == 'doca':
+                doca_compress(data_size)
+            else:
+                print(f"Invalid item: {item}")
+        elif args.operation == 'decompress':
+            if item == 'threaded-single':
+                threaded_decompress_single(data_size, block_size, args.threads)
+            elif item == 'single':
+                decompress_single(data_size, block_size, args.threads)
+            elif item == 'threading':
+                threading_compress(data_size, block_size, args.threads)
+            elif item == 'doca':
+                print(f"DOCA decompression not implemented yet")
+            else:
+                print(f"Invalid item: {item}")
         else:
-            print(f"Invalid item: {item}")
+            print(f"Invalid operation: {args.operation}")
 
 if __name__ == '__main__':  
     main()
