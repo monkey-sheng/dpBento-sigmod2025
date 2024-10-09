@@ -35,9 +35,9 @@ sample_srcs = [
 	# Main function for the sample's executable
 	SAMPLE_NAME + '_main.c',
 	# Common code for all DOCA samples
-	'../../common.c',
+	'common.c',
 	# Common code for all DOCA applications
-	'../../../applications/common/src/utils.c',
+	'utils.c',
 ]
 
 sample_inc_dirs  = ['./']

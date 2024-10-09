@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
     end_time = high_resolution_clock::now();
     regex_duration += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
     printf("matches: %u\n", matches);
-    printf("duration: %ld\n", regex_duration.count() / 1000);
+    printf("duration (ns): %ld\n", regex_duration.count());
 
     /* Scanning is complete, any matches have been handled, so now we just
      * clean up and exit.
