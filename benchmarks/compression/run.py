@@ -120,9 +120,10 @@ def threaded_decompress_single(data_size, block_size, threads):
     data_name =f'{data_size}.txt.gz'
     this_dir = os.path.dirname(os.path.realpath(__file__))
     fname = os.path.join(this_dir, data_name)
+    buf = io.BytesIO(open(fname, 'rb').read())
     
     # start = perf_counter_ns()
-    fp = gzip_ng_threaded.open(fname, 'rb', threads=1, block_size=block_size)
+    fp = gzip_ng_threaded.open(buf, 'rb', threads=1, block_size=block_size)
     start = perf_counter_ns()
     r=fp.read()
     fp.flush()
@@ -140,9 +141,10 @@ def threaded_decompress_single(data_size, block_size, threads):
 def decompress_single(data_size, block_size, threads):
     data_name =f'{data_size}.txt.gz'
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    fname = os.path.join(this_dir, data_name)    
+    fname = os.path.join(this_dir, data_name)
+    buf = io.BytesIO(open(fname, 'rb').read())
 
-    fp = gzip_ng_threaded.open(fname, 'rb', threads=0, block_size=block_size)
+    fp = gzip_ng_threaded.open(buf, 'rb', threads=0, block_size=block_size)
     start = perf_counter_ns()
     r=fp.read()
     fp.flush()
@@ -157,13 +159,14 @@ def decompress_single(data_size, block_size, threads):
     # print(f"SIMD throughput: {throughput} MB/s")
     write_results('single', data_size, block_size, 1, elapsed_ms, operation='decompression')
 
-def threading_compress(data_size, block_size, threads):
+def threading_decompress(data_size, block_size, threads):
     data_name =f'{data_size}.txt.gz'
     this_dir = os.path.dirname(os.path.realpath(__file__))
     fname = os.path.join(this_dir, data_name)
+    buf = io.BytesIO(open(fname, 'rb').read())
     
     # start = perf_counter_ns()
-    fp = gzip_ng_threaded.open(fname, 'rb', threads=threads, block_size=block_size)
+    fp = gzip_ng_threaded.open(buf, 'rb', threads=threads, block_size=block_size)
     start = perf_counter_ns()
     fp.read()
     fp.flush()
@@ -228,7 +231,7 @@ def main():
             elif item == 'single':
                 decompress_single(data_size, block_size, args.threads)
             elif item == 'threading':
-                threading_compress(data_size, block_size, args.threads)
+                threading_decompress(data_size, block_size, args.threads)
             elif item == 'doca':
                 print(f"DOCA decompression not implemented yet")
             else:
