@@ -74,28 +74,38 @@ def run_benchmark(test_name, block_size, numjobs, size, runtime, direct, iodepth
 def main():
     args = parse_arguments()
     
+    # Get the current script's directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
     # Create output directory inside storage
-    storage_output_dir = os.path.join(os.path.dirname(__file__), 'output')
+    storage_output_dir = os.path.join(current_dir, 'output')
     create_directory(storage_output_dir)
     
     log_file_path = os.path.join(storage_output_dir, "benchmark_test_log.txt")
 
-    # Create /tmp/fio_test directory before running the tests
-    test_directory = "/tmp/fio_test"
+    # Create test directory in the current directory
+    test_directory = os.path.join(current_dir, "fio_test")
     create_directory(test_directory)
 
-    with open(log_file_path, 'a') as log_file:
-        benchmark_items = args.benchmark_items.split(',')
-        test_lst = args.test_lst.split(',')
+    try:
+        with open(log_file_path, 'a') as log_file:
+            benchmark_items = args.benchmark_items.split(',')
+            test_lst = args.test_lst.split(',')
 
-        for benchmark_item in benchmark_items:
-            for test in test_lst:
-                run_benchmark(test, args.block_sizes, args.numProc, args.size, args.runtime, args.direct, args.iodepth, args.io_engine, test_directory, storage_output_dir, log_file, args.runtimes, benchmark_item)
+            for benchmark_item in benchmark_items:
+                for test in test_lst:
+                    run_benchmark(test, args.block_sizes, args.numProc, args.size, args.runtime, args.direct, args.iodepth, args.io_engine, test_directory, storage_output_dir, log_file, args.runtimes, benchmark_item)
 
-    # Ensure the results.csv file can be created
-    results_file = os.path.join(storage_output_dir, "results.csv")
-    with open(results_file, 'w') as f:
-        f.write("This file is created to ensure the directory exists.\n")
+        # Ensure the results.csv file can be created
+        results_file = os.path.join(storage_output_dir, "results.csv")
+        with open(results_file, 'w') as f:
+            f.write("This file is created to ensure the directory exists.\n")
+
+    finally:
+        # Clean up the test directory
+        if os.path.exists(test_directory):
+            shutil.rmtree(test_directory)
+            print(f"Test directory {test_directory} has been removed.")
 
 if __name__ == '__main__':
     main()

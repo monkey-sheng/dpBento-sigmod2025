@@ -8,7 +8,7 @@ import numpy as np
 
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
 bw_pattern = re.compile(r'BW=([\d.]+[kM]?[KM]?iB/s)')
-lat_pattern = re.compile(r'lat \((nsec|usec|msec)\).*?avg=\s*([\d.]+)', re.DOTALL)
+lat_pattern = re.compile(r'^\s*lat \((\w+)\):\s*min=[\d.]+,\s*max=[\d.]+,\s*avg=([\d.]+),\s*stdev=[\d.]+', re.MULTILINE)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
@@ -47,17 +47,26 @@ def parse_benchmark_output(filepath):
     for run in runs[1:]:  # Skip the first split part before 'Run1'
         result = {}
 
-        lat_match = lat_pattern.search(run)
-        if lat_match:
-            unit, value = lat_match.groups()
-            if unit == 'nsec':
-                result['avg_latency'] = float(value) / 1e6  # Convert nsec to msec
-            elif unit == 'usec':
-                result['avg_latency'] = float(value) / 1e3  # Convert usec to msec
+        # Find the section containing clat and lat information
+        clat_lat_section = re.search(r'clat.*?lat.*?clat percentiles', run, re.DOTALL)
+        if clat_lat_section:
+            lat_match = lat_pattern.search(clat_lat_section.group())
+            if lat_match:
+                unit, value = lat_match.groups()
+                if unit == 'nsec':
+                    result['avg_latency'] = float(value) / 1e6  # Convert nsec to msec
+                elif unit == 'usec':
+                    result['avg_latency'] = float(value) / 1e3  # Convert usec to msec
+                elif unit == 'msec':
+                    result['avg_latency'] = float(value)  # Already in msec
+                else:
+                    logging.warning(f"Unknown latency unit: {unit}")
+                    continue
             else:
-                result['avg_latency'] = float(value)  # Already in msec
+                logging.warning(f"Could not find lat information in the clat-lat section")
+                continue
         else:
-            logging.warning(f"Could not find latency information in a run")
+            logging.warning(f"Could not find clat-lat section in a run")
             continue
 
         iops = extract_value(iops_pattern, run)
@@ -74,61 +83,77 @@ def process_files(output_folder, metrics):
     results = []
     percentiles_to_calculate = [int(metric.split()[0]) for metric in metrics if "percentile" in metric]
 
-    for root, dirs, files in os.walk(output_folder):
-        for file in files:
-            if file == "combined_results.txt":
-                filepath = os.path.join(root, file)
-                logging.info(f"Processing file: {filepath}")
-                
-                parsed_outputs = parse_benchmark_output(filepath)
-                
-                if not parsed_outputs:
-                    logging.warning(f"No data extracted from {filepath}")
-                    continue
+    for test_type in ['randread', 'randwrite', 'read', 'write']:
+        test_type_dir = os.path.join(output_folder, test_type)
+        if not os.path.isdir(test_type_dir):
+            continue
 
-                iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
-                bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
-                latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
+        for dir_name in os.listdir(test_type_dir):
+            dir_path = os.path.join(test_type_dir, dir_name)
+            if not os.path.isdir(dir_path):
+                continue
 
-                avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
-                avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
-                avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
+            filepath = os.path.join(dir_path, "combined_results.txt")
+            if not os.path.exists(filepath):
+                logging.warning(f"combined_results.txt not found in {dir_path}")
+                continue
 
-                # Extract test parameters from directory structure
-                params = os.path.basename(root).split('_')
-                if len(params) < 7:
-                    logging.error(f"Unexpected directory name format: {os.path.basename(root)}")
-                    continue
+            logging.info(f"Processing file: {filepath}")
+            
+            parsed_outputs = parse_benchmark_output(filepath)
+            
+            if not parsed_outputs:
+                logging.warning(f"No data extracted from {filepath}")
+                continue
 
-                result = {
-                    'test_lst': os.path.basename(os.path.dirname(root)),
-                    'block_sizes': params[0],
-                    'numProc': params[1],
-                    'size': params[2],
-                    'runtime': params[3],
-                    'direct': params[4],
-                    'iodepth': params[5],
-                    'io_engine': '_'.join(params[6:]),
-                    'avg_latency': avg_latency,
-                }
+            iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
+            bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
+            latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
 
-                if "bandwidth" in metrics:
-                    result['bandwidth'] = avg_bw
-                if "IOPS" in metrics:
-                    result['IOPS'] = avg_iops
+            avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
+            avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
+            avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
 
-                if latency_list and percentiles_to_calculate:
-                    latency_distribution = np.array(latency_list)
-                    for percentile in percentiles_to_calculate:
-                        percentile_value = np.percentile(latency_distribution, percentile)
-                        result[f'{percentile}th_percentile_latency'] = percentile_value
+            # Parse directory name for parameters
+            params_match = re.match(r'(\w+)_(\d+)_(\w+)_(\w+)_(\d+)_(\d+)_(.+)', dir_name)
+            
+            if not params_match:
+                logging.error(f"Unexpected directory name format: {dir_name}")
+                continue
 
-                results.append(result)
+            block_size, numProc, size, runtime, direct, iodepth, io_engine = params_match.groups()
+
+            result = {
+                'test_lst': 'storage',  # Assuming 'storage' is the top-level directory
+                'test_type': test_type,
+                'block_sizes': block_size,
+                'numProc': numProc,
+                'size': size,
+                'runtime': runtime,
+                'direct': direct,
+                'iodepth': iodepth,
+                'io_engine': io_engine,
+                'avg_latency': avg_latency,
+            }
+
+            if "bandwidth" in metrics:
+                result['bandwidth'] = avg_bw
+            if "IOPS" in metrics:
+                result['IOPS'] = avg_iops
+
+            if latency_list and percentiles_to_calculate:
+                latency_distribution = np.array(latency_list)
+                for percentile in percentiles_to_calculate:
+                    percentile_value = np.percentile(latency_distribution, percentile)
+                    result[f'{percentile}th_percentile_latency'] = percentile_value
+
+            results.append(result)
+            logging.info(f"Processed test: {test_type}, block size: {block_size}, io_engine: {io_engine}")
 
     return results
 
 def save_to_csv(results, output_folder, metrics):
-    base_fields = ['test_lst', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine']
+    base_fields = ['test_lst', 'test_type', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine']
     
     metric_fields_map = {
         'avg_latency': 'avg_latency',
