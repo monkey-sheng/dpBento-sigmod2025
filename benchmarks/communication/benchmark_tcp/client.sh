@@ -45,7 +45,7 @@ sleep 5
 echo "Starting the client on the DPU..."
 cd $LOCAL_DIRECTORY
 cd client || { echo "Directory client not found"; exit 1; }
-gcc -o client client.c || { echo "Compilation failed"; exit 1; }
+gcc -o client client.c -lpthread|| { echo "Compilation failed"; exit 1; }
 ./client $HOST_IP $PORT $FILE_SIZE $THREADS 1 $TOTAL_REQUESTS $OUTPUT_FILE $isBW
 # HOST_IP, PORT, FILE_SIZE, THREADS, TARGET_METRIC (1 defaults to everything), TOTAL_REQUESTS
 
