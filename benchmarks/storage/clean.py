@@ -85,8 +85,6 @@ def main():
     # Clean up package cache
     clean_package_cache()
 
-    # Clean up /tmp directory
-    clean_tmp_directory()
 
     logging.info("Cleanup complete. All installed packages and temporary files have been removed.")
 
