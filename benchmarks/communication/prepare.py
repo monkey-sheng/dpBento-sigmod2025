@@ -9,6 +9,12 @@ def run_command(command, check=True, shell=False):
 
 def install_packages(requirements_path):
     """Install packages globally using pip."""
+    try:
+        subprocess.run(["sudo", "apt", "install", "sshpass"], check=True)
+        print("sshpass successfully installed.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred during installation: {e}")
+        
     run_command(['pip3', 'install', '--upgrade', 'pip'])
     if os.path.exists(requirements_path):
         run_command(['pip3', 'install', '-r', requirements_path])
