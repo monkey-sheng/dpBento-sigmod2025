@@ -23,11 +23,11 @@
 #include <doca_error.h>
 #include <doca_log.h>
 
-#include <doca_erasure_coding.h>
-#include <doca_regex.h>
-#include <doca_sha.h>
-#include <doca_dma.h>
-#include <doca_ipsec.h>
+// #include <doca_erasure_coding.h>
+// #include <doca_regex.h>
+// #include <doca_sha.h>
+// #include <doca_dma.h>
+// #include <doca_ipsec.h>
 
 #include "common.h"
 
@@ -382,10 +382,10 @@ compress_deflate(const char *pci_addr, char *file_data, size_t file_size, enum d
 		compress_cleanup(&state, compress);
 		return result;
 	}
-	clock_gettime(CLOCK_MONOTONIC, &submit_end);
-	elpased_submit = submit_end.tv_sec - submit_start.tv_sec;
-	elpased_submit += (submit_end.tv_nsec - submit_start.tv_nsec) / 1000000000.0;
-	printf("submit time: %f\n", elpased_submit);
+	// clock_gettime(CLOCK_MONOTONIC, &submit_end);
+	// elpased_submit = submit_end.tv_sec - submit_start.tv_sec;
+	// elpased_submit += (submit_end.tv_nsec - submit_start.tv_nsec) / 1000000000.0;
+	// printf("submit time: %f\n", elpased_submit);
 
 	/* Wait for job completion */
 	while ((result = doca_workq_progress_retrieve(state.workq, &event, DOCA_WORKQ_RETRIEVE_FLAGS_NONE)) ==
@@ -394,9 +394,12 @@ compress_deflate(const char *pci_addr, char *file_data, size_t file_size, enum d
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &completed);
-	elapsed_complete = completed.tv_sec - submit_end.tv_sec;
-	elapsed_complete += (completed.tv_nsec - submit_end.tv_nsec) / 1000000000.0;
-	printf("completion time: %.9f, total = %.9f\n", elapsed_complete, elapsed_complete + elpased_submit);
+	// elapsed_complete = completed.tv_sec - submit_end.tv_sec;
+	// elapsed_complete += (completed.tv_nsec - submit_end.tv_nsec) / 1000000000.0;
+	// printf("completion time: %.9f, total = %.9f\n", elapsed_complete, elapsed_complete + elpased_submit);
+	elapsed_complete = completed.tv_sec - submit_start.tv_sec;
+	elapsed_complete += (completed.tv_nsec - submit_start.tv_nsec) / 1000000000.0;
+	printf("total = %.9f\n", elapsed_complete);
 
 
 
