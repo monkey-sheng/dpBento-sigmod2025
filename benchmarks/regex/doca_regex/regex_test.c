@@ -387,6 +387,7 @@ regex_scan(char *data_buffer, size_t data_buffer_len, const char *pci_addr, char
 	double elpased_submit, elapsed_complete;
 
 	clock_gettime(CLOCK_MONOTONIC, &submit_start);
+
 	/* The main loop, enqueues jobs (chunks) and dequeues for results */
 	do {
 		/* Enqueue jobs */
@@ -408,12 +409,13 @@ regex_scan(char *data_buffer, size_t data_buffer_len, const char *pci_addr, char
 		}
 		nb_dequeued += ret;
 	} while (remaining_bytes > 0 || nb_dequeued != nb_enqueued);
-	clock_gettime(CLOCK_MONOTONIC, &completed);
-	elapsed_complete = completed.tv_sec - submit_end.tv_sec;
-	elapsed_complete += (completed.tv_nsec - submit_end.tv_nsec) / 1000000000.0;
-	printf("completion time: %.9f, total = %.9f\n", elapsed_complete, elapsed_complete + elpased_submit);
 
-	/* RegEx scan recognition cleanup */
+	clock_gettime(CLOCK_MONOTONIC, &completed);
+	elapsed_complete = completed.tv_sec - submit_start.tv_sec;
+	elapsed_complete += (completed.tv_nsec - submit_start.tv_nsec) / 1000000000.0;
+	printf("total = %.9f\n", elapsed_complete);
+
+	/* cleanup */
 	regex_scan_destroy(&rgx_cfg);
 	return DOCA_SUCCESS;
 }
