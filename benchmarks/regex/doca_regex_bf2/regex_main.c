@@ -56,7 +56,7 @@ pci_address_callback(void *param, void *config)
 		DOCA_LOG_ERR("PCI address is too long max %d", MAX_ARG_SIZE - 1);
 		return DOCA_ERROR_INVALID_VALUE;
 	}
-	strlcpy(rgx_cfg->pci_address, pci_address, MAX_ARG_SIZE);
+	strncpy(rgx_cfg->pci_address, pci_address, MAX_ARG_SIZE);
 	return DOCA_SUCCESS;
 }
 
@@ -96,7 +96,7 @@ data_callback(void *param, void *config)
 		DOCA_LOG_ERR("Data path is too long max %d", MAX_FILE_NAME - 1);
 		return DOCA_ERROR_INVALID_VALUE;
 	}
-	strlcpy(rgx_cfg->data, data_path, MAX_FILE_NAME);
+	strncpy(rgx_cfg->data, data_path, MAX_FILE_NAME);
 	return DOCA_SUCCESS;
 
 }
