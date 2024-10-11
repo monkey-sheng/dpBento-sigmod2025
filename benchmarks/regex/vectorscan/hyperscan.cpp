@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
     
     end_time = high_resolution_clock::now();
     regex_duration += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
-    printf("matches: %u\n", matches);
+    printf("matches: %u\n", matches.load());
     printf("duration (ns): %ld\n", regex_duration.count());
 
     
