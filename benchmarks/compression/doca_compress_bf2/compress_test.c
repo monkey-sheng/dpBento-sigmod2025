@@ -70,7 +70,7 @@ compress_cleanup(struct program_core_objects *state, struct doca_compress *compr
 static doca_error_t
 compress_jobs_compress_is_supported(struct doca_devinfo *devinfo)
 {
-	printf("compress supported: %d\n", doca_compress_job_get_supported(devinfo, DOCA_COMPRESS_DEFLATE_JOB));
+	// printf("compress supported: %d\n", doca_compress_job_get_supported(devinfo, DOCA_COMPRESS_DEFLATE_JOB));
 	return doca_compress_job_get_supported(devinfo, DOCA_COMPRESS_DEFLATE_JOB);
 }
 
@@ -83,7 +83,7 @@ compress_jobs_compress_is_supported(struct doca_devinfo *devinfo)
 static doca_error_t
 compress_jobs_decompress_is_supported(struct doca_devinfo *devinfo)
 {
-	printf("decompress supported: %d\n", doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB));
+	// printf("decompress supported: %d\n", doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB));
 	return doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB);
 }
 
@@ -257,8 +257,8 @@ compress_deflate(struct doca_pci_bdf *pci_dev, char *file_data, size_t file_size
 		doca_buf_get_head(compress_job.dst_buff, (void **)&resp_head);
 		doca_buf_get_len(compress_job.dst_buff, &data_len);
 		printf("dst buff len = %ld\n", data_len);
-		doca_buf_get_data_len(compress_job.dst_buff, &data_len);
-		printf("dst buff data len = %ld\n", data_len);
+		// doca_buf_get_data_len(compress_job.dst_buff, &data_len);
+		// printf("dst buff data len = %ld\n", data_len);
 	}
 
 	if (doca_buf_refcount_rm(src_doca_buf, NULL) != DOCA_SUCCESS ||
