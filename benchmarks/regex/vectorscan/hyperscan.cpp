@@ -3,12 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <atomic>
+// #include <pthread.h>
+#include <thread>
 
 #include <hs.h>
 #include <chrono>
 using std::chrono::high_resolution_clock;
 
-#define N_LINES_PER_BLOCK 5000
+// #define N_LINES_PER_BLOCK 5000
 
 
 /**
@@ -86,7 +89,7 @@ static char *readInputData(const char *inputFN, unsigned int *length) {
 
 bool handler_to_run = true;
 
-uint matches = 0;
+std::atomic_int matches = 0;
 
 uint like_copper_matches = 0;
 uint not_like_economy_polished_matches = 0;
@@ -110,15 +113,41 @@ static int eventHandler(unsigned int id, unsigned long long from,
     return 0;
 }
 
+void scanInputData(hs_database_t *database, char *inputData, unsigned int length, char *pattern) {
+        hs_scratch_t *scratch = NULL;
+        if (hs_alloc_scratch(database, &scratch) != HS_SUCCESS) {
+            fprintf(stderr, "ERROR: Unable to allocate scratch space. Exiting.\n");
+            free(inputData);
+            hs_free_database(database);
+            return;
+        }
+
+        // printf("Scanning %s %u bytes with Hyperscan\n", inputFN, length);
+
+        if (hs_scan(database, inputData, length, 0, scratch, eventHandler,
+                    pattern) != HS_SUCCESS) {
+            fprintf(stderr, "ERROR: Unable to scan input buffer. Exiting.\n");
+            hs_free_scratch(scratch);
+            free(inputData);
+            hs_free_database(database);
+            return;
+        }
+        // printf("matches: %u\n", matches);
+
+        hs_free_scratch(scratch);        
+    }
+
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <pattern> <input file>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <n_threads> <pattern> <input file>\n", argv[0]);
         return -1;
     }
 
-    char *pattern = argv[1];
+    int n_threads = atoi(argv[1]);
+
+    char *pattern = argv[2];
     // char *pattern = "([A-Z]| )+?COPPER";
-    char *inputFN = argv[2];
+    char *inputFN = argv[3];
     printf("Pattern: %s\n", pattern);
 
     /* First, we attempt to compile the pattern provided on the command line.
@@ -145,52 +174,30 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    /* Finally, we issue a call to hs_scan, which will search the input buffer
-     * for the pattern represented in the bytecode. Note that in order to do
-     * this, scratch space needs to be allocated with the hs_alloc_scratch
-     * function. In typical usage, you would reuse this scratch space for many
-     * calls to hs_scan, but as we're only doing one, we'll be allocating it
-     * and deallocating it as soon as our matching is done.
-     *
-     * When matches occur, the specified callback function (eventHandler in
-     * this file) will be called. Note that although it is reminiscent of
-     * asynchronous APIs, Hyperscan operates synchronously: all matches will be
-     * found, and all callbacks issued, *before* hs_scan returns.
-     *
-     * In this example, we provide the input pattern as the context pointer so
-     * that the callback is able to print out the pattern that matched on each
-     * match event.
-     */
-    hs_scratch_t *scratch = NULL;
-    if (hs_alloc_scratch(database, &scratch) != HS_SUCCESS) {
-        fprintf(stderr, "ERROR: Unable to allocate scratch space. Exiting.\n");
-        free(inputData);
-        hs_free_database(database);
-        return -1;
-    }
-
-    printf("Scanning %s %u bytes with Hyperscan\n", inputFN, length);
-
     std::chrono::time_point<high_resolution_clock> start_time, end_time;
-
     start_time = high_resolution_clock::now();
-    if (hs_scan(database, inputData, length, 0, scratch, eventHandler,
-                pattern) != HS_SUCCESS) {
-        fprintf(stderr, "ERROR: Unable to scan input buffer. Exiting.\n");
-        hs_free_scratch(scratch);
-        free(inputData);
-        hs_free_database(database);
-        return -1;
+
+    // use threads to scan the input data
+    unsigned int length_per_thread = length / n_threads;
+    std::thread threads[n_threads];
+    for (int i = 0; i < n_threads; i++) {
+        threads[i] = std::thread(scanInputData, database, inputData + i * length_per_thread, length_per_thread, pattern);
     }
+
+    for (int i = 0; i < n_threads; i++) {
+        threads[i].join();
+    }
+    
     end_time = high_resolution_clock::now();
     regex_duration += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
     printf("matches: %u\n", matches);
     printf("duration (ns): %ld\n", regex_duration.count());
 
+    
+
     /* Scanning is complete, any matches have been handled, so now we just
      * clean up and exit.
      */
-    hs_free_scratch(scratch);
     free(inputData);
     hs_free_database(database);
     return 0;
