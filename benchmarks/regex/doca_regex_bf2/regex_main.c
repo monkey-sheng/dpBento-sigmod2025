@@ -11,7 +11,7 @@
  *
  */
 
-#include <bsd/string.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include <doca_argp.h>
