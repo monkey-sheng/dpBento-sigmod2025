@@ -12,6 +12,11 @@
 
 long long int total = (long long)1024 * 1024 * 1024 * 64;
 
+struct biguint{
+  uint64_t num;
+  uint64_t padding[7];
+}typedef biguint;
+
 int get_num_cpu(){
   FILE* inp = popen("lscpu", "r");
   char* buf = NULL;
@@ -30,33 +35,44 @@ int get_num_cpu(){
 struct run_benchmark_thread_args {
   long long int iters;
   long long int size;
+  uint64_t counter;
   struct timeval start;
   struct timeval end;
-  uint64_t* arr;
+  biguint* arr;
+  biguint* scratch_space;
 };
 
 void* run_benchmark_thread(void* void_args){
   struct run_benchmark_thread_args* args = (struct run_benchmark_thread_args*) void_args;
+  uint64_t counter = 0;
+  int offset = rand() % 3;
+  //offset = 0;
+  args->size -= offset * sizeof(biguint);
   int err1 = gettimeofday(&(args->start), NULL);
+  // What if we call this func iters times?
   //actual benchmark here
     for (long long int i = 0; (i < (args->iters)); i++){
-      for (long long int j = 0; j < args->size/sizeof(uint64_t); j++){
-        args->arr[j] = args->arr[j] + 1;
+      for (long long int j = 0; j < args->size/sizeof(biguint) - offset; j++){
+        //args->arr[j].num = args->arr[j].num + 1;
+        //counter++;
+        counter = args->arr[j].num;
       }
     }
   int err2 = gettimeofday(&(args->end), NULL);
+  args->counter = counter;
   return NULL;
 }
 void run_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size){
   long long iters = total / size;
   pthread_t threads[NUM_THREADS];
   struct run_benchmark_thread_args thread_args[NUM_THREADS];
+  long long int alloc_size = (size/sizeof(biguint)) * sizeof(biguint) / NUM_THREADS;
   for (int i = 0; i < NUM_THREADS; i++) {
-    uint64_t* arr = malloc(size/NUM_THREADS);
-    thread_args[i] = (struct run_benchmark_thread_args) {iters, size/NUM_THREADS, 0};
+    biguint* arr = malloc(alloc_size);
+    thread_args[i] = (struct run_benchmark_thread_args) {iters, alloc_size, rand(), 0};
     if (arr == NULL) { fprintf(stderr, "failed allocating memory"); exit(EXIT_FAILURE); }
-    for (uint64_t i = 0; i < (size/NUM_THREADS) / sizeof(uint64_t); i++){
-      arr[i] = i;
+    for (uint64_t i = 0; i < (alloc_size) / sizeof(biguint); i++){
+      arr[i].num = rand();
     } 
     thread_args[i].arr = arr;
   }
@@ -71,12 +87,13 @@ void run_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size)
     if (pthread_join(threads[i], NULL)){
       fprintf(stderr, "Failed joining thread\n");
     }
-    fwrite(&(thread_args[i].arr[random() % (size/NUM_THREADS / sizeof(uint64_t))]), sizeof(uint64_t), 1, fnull);
+    //fwrite(&(thread_args[i].arr[random() % (alloc_size / sizeof(biguint))]), sizeof(biguint), 1, fnull);
+    fwrite(&(thread_args[i].counter), sizeof(uint64_t), 1, fnull);
     free(thread_args[i].arr);
-    bandwidth += ((double)total/NUM_THREADS/1024/1024/1024)/(((thread_args[i].end.tv_sec * 1000000 + thread_args[i].end.tv_usec) - (thread_args[i].start.tv_sec * 1000000 + thread_args[i].start.tv_usec))/(double)1000000); 
-    //printf("size: %lld, thread: %ld, cum_band: %lf\n", thread_args[i].size, threads[i], bandwidth );
+    bandwidth += ((double) (alloc_size * iters)/1024/1024/1024)/(((thread_args[i].end.tv_sec * 1000000 + thread_args[i].end.tv_usec) - (thread_args[i].start.tv_sec * 1000000 + thread_args[i].start.tv_usec))/(double)1000000); 
+    printf("size: %lld, thread: %ld, cum_band: %lf\n", thread_args[i].size, threads[i], bandwidth );
   }
-  fprintf(fout, "%lld,%d,%lf \n", size/1024, NUM_THREADS, bandwidth);
+  fprintf(fout, "%lld,%d,%lf \n", alloc_size * NUM_THREADS /1024, NUM_THREADS, bandwidth);
 }
 
 void check_and_run_cache(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size, int arr_size, uint64_t arr[arr_size]){
