@@ -14,7 +14,7 @@ class RDBParser(Parser):
         self.parser.add_argument("--scale_factors_description", help="Description of scale factors")
         self.parser.add_argument("--query_description", help="Description of the query")
         self.parser.add_argument("--execution_mode_description", help="Description of the execution mode")
-        self.parser.add_argument("--thread_description", help="Description of the thread numbers")
+        self.parser.add_argument("--threads_description", help="Description of the thread numbers")
         self.parser.add_argument("--metrics", nargs='+', help="Metrics to collect")
 
     def parse_arguments(self):

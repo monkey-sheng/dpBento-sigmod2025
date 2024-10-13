@@ -36,7 +36,7 @@ class RDBRunner(Runner):
         else:
             logging.debug(f"Directory {self.output_dir} already exists.")
 
-    def run_benchmark_test(self, scale_factors, query, execution_mode):
+    def run_benchmark_test(self, scale_factors, query, execution_mode, threads):
         for benchmark_item in self.args.benchmark_items.split(','):
             results = []
         sf = scale_factors
@@ -49,7 +49,8 @@ class RDBRunner(Runner):
                 logging.info(f"Data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
 
         with duckdb.connect(database=duckdb_file_path, read_only=True) as conn:
-            conn.execute(f"PRAGMA threads={threads};")
+            if threads != "0":
+                conn.execute(f"PRAGMA threads={threads};")
             
             query_name = f"Q{int(query)}"
             cmd = f"PRAGMA tpch({query});"
@@ -68,6 +69,7 @@ class RDBRunner(Runner):
                     'Scale Factor': sf,
                     'Query': query_name,
                     'Execution Mode': execution_mode,
+                    'Threads': threads, 
                     'Run Time (s)': run_time
                 })
             elif execution_mode == "hot":
@@ -88,6 +90,7 @@ class RDBRunner(Runner):
                     'Scale Factor': sf,
                     'Query': query_name,
                     'Execution Mode': execution_mode,
+                    'Threads': threads, 
                     'Run Time (s)': run_time
                 })
 
