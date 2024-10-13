@@ -49,8 +49,6 @@ class RDBRunner(Runner):
                 logging.info(f"Data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
 
         with duckdb.connect(database=duckdb_file_path, read_only=True) as conn:
-            if threads != "0":
-                conn.execute(f"PRAGMA threads={threads};")
             
             query_name = f"Q{int(query)}"
             cmd = f"PRAGMA tpch({query});"
@@ -59,6 +57,10 @@ class RDBRunner(Runner):
                 conn = duckdb.connect(database=duckdb_file_path, read_only=True)
                 # Simulate a cold start by reopening the connection
                 drop_caches()
+                if threads != "0":
+                    conn.execute(f"PRAGMA threads={threads};")
+                threads_setting = conn.execute("SELECT current_setting('threads')").fetchone()
+                print(threads_setting[0])
                 
                 start_time = time.time()
                 conn.execute(cmd)
@@ -77,6 +79,10 @@ class RDBRunner(Runner):
                 conn = duckdb.connect(database=duckdb_file_path, read_only=True)
                 # Simulate a cold start by reopening the connection
                 drop_caches()
+                if threads != "0":
+                    conn.execute(f"PRAGMA threads={threads};")
+                threads_setting = conn.execute("SELECT current_setting('threads')").fetchone()
+                print(threads_setting[0])
                 run_times = []
                 for i in range(4):
                     start_time = time.time()
