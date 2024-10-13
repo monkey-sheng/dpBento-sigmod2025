@@ -49,6 +49,7 @@ class RDBRunner(Runner):
                 logging.info(f"Data generated for SF={sf} in DuckDB database at {duckdb_file_path}")
 
         with duckdb.connect(database=duckdb_file_path, read_only=True) as conn:
+            conn.execute(f"PRAGMA threads={threads};")
             
             query_name = f"Q{int(query)}"
             cmd = f"PRAGMA tpch({query});"
