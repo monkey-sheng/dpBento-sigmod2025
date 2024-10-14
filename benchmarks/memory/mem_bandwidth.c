@@ -133,6 +133,18 @@ void run_write_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int
     }
     fprintf(stderr, "thread %ld\n", threads[i]);
   }
+  double bandwidth = 0;
+  for (int i = 0; i < NUM_THREADS; i++){
+    if (pthread_join(threads[i], NULL)){
+      fprintf(stderr, "Failed joining thread\n");
+    }
+    //fwrite(&(thread_args[i].arr[random() % (alloc_size / sizeof(biguint))]), sizeof(biguint), 1, fnull);
+    fwrite(&(thread_args[i].counter), sizeof(uint64_t), 1, fnull);
+    free(thread_args[i].arr);
+    bandwidth += ((double) (alloc_size * iters)/1024/1024/1024)/(((thread_args[i].end.tv_sec * 1000000 + thread_args[i].end.tv_usec) - (thread_args[i].start.tv_sec * 1000000 + thread_args[i].start.tv_usec))/(double)1000000); 
+    printf("size: %lld, thread: %ld, cum_band: %lf\n", thread_args[i].size, threads[i], bandwidth );
+  }
+  fprintf(fout, "%lld,%d,%lf \n", alloc_size * NUM_THREADS /1024, NUM_THREADS, bandwidth);
 }
 //void run_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size, enum pattern pat){
 //  long long iters = total / size;
