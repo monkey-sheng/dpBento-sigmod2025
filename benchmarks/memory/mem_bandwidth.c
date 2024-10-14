@@ -48,7 +48,9 @@ struct benchmark_thread_args {
   struct timeval start;
   struct timeval end;
   biguint* arr;
-  //biguint* scratch_space;
+  uint32_t* rand_num_arr;
+  uint64_t rand_num_arr_size;
+
 };
 
 void* run_read_benchmark_thread(void* void_args){
@@ -76,30 +78,21 @@ bool arr_in(uint32_t num, int64_t num_elems, uint32_t elems[num_elems]){
 }
 void* run_write_rand_benchmark_thread(void* void_args){
   struct benchmark_thread_args* args = (struct benchmark_thread_args*) void_args;
-  volatile biguint* arr = args->arr;
-  // randomly pick sizeof(L1)/sizeof(uint32)/NUM_THREADS numbers
-  int64_t num_rand_nums = 1000; // TODO change
-  uint32_t rand_nums[num_rand_nums]; // TODO: def preprocess this
-  for (long long int i = 0; i < num_rand_nums; i++){
-    uint32_t rand_num = rand() % UINT32_MAX;
-    while (arr_in(rand_num, i - 1, rand_nums)) {
-      uint32_t rand_num = rand() % UINT32_MAX;
-    }
-    rand_nums[i] = rand_num;
-  }
+  biguint* arr = args->arr;
+  biguint to_push = (struct biguint) {0};
 
   int err1 = gettimeofday(&args->start, NULL);
-  // iterate over those instead
-  // do a regular push benchmark
+  for (long long int i = 0; i < args->iters; i++){
+    for (long long int j = 0; j < args->rand_num_arr_size; j++){
+      args->arr[args->rand_num_arr[j]] = to_push;
+    }
+  }
   int err2 = gettimeofday(&args->end, NULL);
   args->counter = 3;
   return NULL;
 }
 void* run_write_benchmark_thread(void* void_args){
   struct benchmark_thread_args* args = (struct benchmark_thread_args*) void_args;
-  if (args->arr == NULL){
-    fprintf(stderr, "thread %lu has no array\n", args->counter); fflush(stderr);
-  }
   //volatile biguint* arr = args->arr;
   biguint to_push = (struct biguint) {0};
   int err1 = gettimeofday((&args->start), NULL);
@@ -112,8 +105,53 @@ void* run_write_benchmark_thread(void* void_args){
   args->counter = 2;
   return NULL;
 }
+void run_write_rand_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size){
+  long long iters = total/size;
+  pthread_t threads[NUM_THREADS];
+  long long l1_size = sysconf(_SC_LEVEL1_DCACHE_SIZE);
+  struct benchmark_thread_args thread_args[NUM_THREADS];
+  long long int alloc_size = (size/sizeof(biguint)) * sizeof(biguint) / NUM_THREADS;
+  iters *= alloc_size/(l1_size/2);
+  for (uint64_t i = 0; i < NUM_THREADS; i++) {
+    biguint* arr = malloc(alloc_size);
+    thread_args[i] = (struct benchmark_thread_args) {iters, alloc_size, i, 0};
+    if (arr == NULL) { 
+      fprintf(stderr, "failed allocating memory"); exit(EXIT_FAILURE); }
+    thread_args[i].arr = arr;
+    uint32_t* rand_nums = malloc(l1_size/2);
+    uint64_t num_rand_nums = l1_size/2/sizeof(uint32_t);   
+    for (long long int i = 0; i < num_rand_nums; i++) {
+      uint32_t rand_num = rand() % UINT32_MAX;
+      while (arr_in(rand_num, i - 1, rand_nums)){
+        rand_num = rand() % UINT32_MAX;
+      }
+      rand_nums[i] = rand_num;
+    }
+    thread_args[i].rand_num_arr = rand_nums;
+    thread_args[i].rand_num_arr_size = num_rand_nums;
+  }
 
-void run_write_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size, enum pattern pat){
+  for (int i = 0; i < NUM_THREADS; i++){
+    if (pthread_create(&threads[i], NULL, run_write_rand_benchmark_thread, &thread_args[i])){
+      fprintf(stderr, "Failed to create thread\n");
+      exit(EXIT_FAILURE);
+    }
+    fprintf(stderr, "thread %ld\n", threads[i]);
+  }
+  double bandwidth = 0;
+  for (int i = 0; i < NUM_THREADS; i++){
+    if (pthread_join(threads[i], NULL)){
+      fprintf(stderr, "Failed joining thread\n");
+    }
+    //fwrite(&(thread_args[i].arr[random() % (alloc_size / sizeof(biguint))]), sizeof(biguint), 1, fnull);
+    fwrite(&(thread_args[i].counter), sizeof(uint64_t), 1, fnull);
+    free(thread_args[i].arr);
+    bandwidth += ((double) (alloc_size * iters)/1024/1024/1024)/(((thread_args[i].end.tv_sec * 1000000 + thread_args[i].end.tv_usec) - (thread_args[i].start.tv_sec * 1000000 + thread_args[i].start.tv_usec))/(double)1000000); 
+    printf("size: %lld, thread: %ld, cum_band: %lf\n", thread_args[i].size, threads[i], bandwidth );
+  }
+  fprintf(fout, "%lld,%d,%lf \n", alloc_size * NUM_THREADS /1024, NUM_THREADS, bandwidth);
+}
+void run_write_seq_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size){
   long long iters = total/size;
   pthread_t threads[NUM_THREADS];
   struct benchmark_thread_args thread_args[NUM_THREADS];
@@ -152,6 +190,10 @@ void run_write_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int
 //  struct benchmark_thread_args thread_args[NUM_THREADS];
 //  long long int alloc_size = (size/sizeof(biguint)) * sizeof(biguint) / NUM_THREADS;
 //}
+void run_write_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size, enum pattern pat){
+  if (pat == SEQ_WRITE) { run_write_seq_benchmark(NUM_THREADS, fout, fnull, size); }
+  else if (pat == RAND_WRITE) { run_write_rand_benchmark(NUM_THREADS, fout, fnull, size); }
+}
 void run_read_benchmark(int NUM_THREADS, FILE* fout, FILE* fnull, long long int size, enum pattern pat){
   long long iters = total / size;
   pthread_t threads[NUM_THREADS];
@@ -341,7 +383,7 @@ int main(int argc, const char** argv){
 
     exit(EXIT_SUCCESS);
   } 
-  else if (pat == SEQ_WRITE){
+  else if (pat == SEQ_WRITE || pat == RAND_WRITE){
     if (START_SIZE == END_SIZE) {
       run_write_benchmark(NUM_THREADS, fout, fnull, START_SIZE, pat);
       exit(EXIT_SUCCESS);
@@ -353,8 +395,5 @@ int main(int argc, const char** argv){
     for (int i = 0; sizes[i] < END_SIZE && i < log2u(END_SIZE/ START_SIZE) + 2 + 9; i++)
       run_write_benchmark(NUM_THREADS, fout, fnull, sizes[i], pat);
     run_write_benchmark(NUM_THREADS, fout, fnull, END_SIZE, pat);
-  }
-  else {
-    fprintf(stderr, "rand_write not yet implemented");
   }
 }
