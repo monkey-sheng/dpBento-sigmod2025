@@ -15,7 +15,10 @@
                 "query_description": "List of TPC-H queries to be executed",
 
                 "execution_mode": ["cold", "hot"],
-                "execution_mode_description": "Cold means no caching, hot means using cache"
+                "execution_mode_description": "Cold means no caching, hot means using cache",
+
+                "threads": [8], 
+                "threads_description": "Number of threads to be used by DuckDB for query execution"
             },
             "metrics": ["run_time"]
         }
