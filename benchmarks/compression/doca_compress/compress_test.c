@@ -34,8 +34,8 @@
 DOCA_LOG_REGISTER(COMPRESS_DEFLATE);
 
 #define SLEEP_IN_NANOS (10 * 1000)		/* Sample the job every 10 microseconds  */
-#define MAX_FILE_SIZE (1024 * 1024 * 1024)	/* compress files up to 128MB */
-
+#define MAX_FILE_SIZE (128 * 1024 * 1024)	/* compress files up to 128MB */
+doca_compress_get_max_buf_size
 /*
  * Free callback - free doca_buf allocated pointer
  *
@@ -87,93 +87,6 @@ compress_jobs_compress_is_supported(struct doca_devinfo *devinfo)
 		printf("+++ DOCA_COMPRESS_DEFLATE_JOB !!NOT!! supported\n");
 		unsup = true;
 	}
-
-	if (doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB) == DOCA_SUCCESS) {
-		printf("+++ DOCA_DECOMPRESS_DEFLATE_JOB supported\n");
-	}
-	else {
-		printf("+++ DOCA_DECOMPRESS_DEFLATE_JOB !!NOT!! supported\n");
-		unsup = true;
-	}
-
-	if (doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_LZ4_JOB) == DOCA_SUCCESS) {
-		printf("+++ DOCA_DECOMPRESS_LZ4_JOB supported\n");
-	}
-	else {
-		printf("+++ DOCA_DECOMPRESS_LZ4_JOB !!NOT!! supported\n");
-		unsup = true;
-	}
-
-	if (doca_ec_job_get_supported(devinfo, DOCA_EC_JOB_CREATE) == DOCA_SUCCESS) {
-		printf("+++ DOCA_EC_JOB_CREATE supported\n");
-	}
-	else {
-		printf("+++ DOCA_EC_JOB_CREATE !!NOT!! supported\n");
-		unsup = true;
-	}
-	if (doca_ec_job_get_supported(devinfo, DOCA_EC_JOB_GALOIS_MUL) == DOCA_SUCCESS) {
-		printf("+++ DOCA_EC_JOB_GALOIS_MUL supported\n");
-	}
-	else {
-		printf("+++ DOCA_EC_JOB_GALOIS_MUL !!NOT!! supported\n");
-		unsup = true;
-	}
-	if (doca_ec_job_get_supported(devinfo, DOCA_EC_JOB_RECOVER) == DOCA_SUCCESS) {
-		printf("+++ DOCA_EC_JOB_RECOVER supported\n");
-	}
-	else {
-		printf("+++ DOCA_EC_JOB_RECOVER !!NOT!! supported\n");
-		unsup = true;
-	}
-	if (doca_ec_job_get_supported(devinfo, DOCA_EC_JOB_UPDATE) == DOCA_SUCCESS) {
-		printf("+++ DOCA_EC_JOB_UPDATE supported\n");
-	}
-	else {
-		printf("+++ DOCA_EC_JOB_UPDATE !!NOT!! supported\n");
-		unsup = true;
-	}
-
-	if (doca_regex_job_get_supported(devinfo, DOCA_REGEX_JOB_SEARCH) == DOCA_SUCCESS) {
-		printf("+++ REGEX supported\n");
-	}
-	else {
-		printf("+++ REGEX !!NOT!! supported\n");
-		unsup = true;
-	}
-
-	for (enum doca_sha_job_type i = DOCA_SHA_JOB_SHA1; i <= DOCA_SHA_JOB_SHA512_PARTIAL; i++)
-	{
-		if (doca_sha_job_get_supported(devinfo, i) == DOCA_SUCCESS) {
-			printf("+++ SHA JOB %d supported\n", i);
-		}
-		else {
-			printf("+++ SHA JOB %d !!NOT!! supported\n", i);
-			unsup = true;
-		}
-	}
-
-	if (doca_dma_job_get_supported(devinfo, DOCA_DMA_JOB_MEMCPY) == DOCA_SUCCESS) {
-		printf("+++ DOCA_DMA_JOB_MEMCPY supported\n");
-	}
-	else {
-		printf("+++ DMA !!NOT!! supported\n");
-		unsup = true;
-	}
-
-	if (doca_ipsec_job_get_supported(devinfo, DOCA_IPSEC_JOB_SA_CREATE) == DOCA_SUCCESS) {
-		printf("+++ DOCA_IPSEC_JOB_SA_CREATE supported\n");
-	}
-	else {
-		printf("+++ DOCA_IPSEC_JOB_SA_CREATE !!NOT!! supported\n");
-		unsup = true;
-	}
-	if (doca_ipsec_job_get_supported(devinfo, DOCA_IPSEC_JOB_SA_DESTROY) == DOCA_SUCCESS) {
-		printf("+++ DOCA_IPSEC_JOB_SA_DESTROY supported\n");
-	}
-	else {
-		printf("+++ DOCA_IPSEC_JOB_SA_DESTROY !!NOT!! supported\n");
-		unsup = true;
-	}
 	//
 	return DOCA_SUCCESS;
 	//
@@ -199,7 +112,7 @@ compress_jobs_decompress_is_supported(struct doca_devinfo *devinfo)
 		printf("decompress_deflate_get_max_buf_size = %ld\n", maxbufsize);
 	}
 	else
-		printf("!!LZ4 DECOMPERSS NOT SUPPORTED!!\n");
+		printf("!!DEFLATE DECOMPERSS NOT SUPPORTED!!\n");
 	return err;
 }
 

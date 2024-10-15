@@ -21,4 +21,5 @@ def compile_doca_compress():
 
 if __name__ == '__main__':
     install_dependencies()
+    compile_doca_compress()
     print(f"Installed deps for compression benchmarks")
