@@ -35,7 +35,6 @@ DOCA_LOG_REGISTER(COMPRESS_DEFLATE);
 
 #define SLEEP_IN_NANOS (10 * 1000)		/* Sample the job every 10 microseconds  */
 #define MAX_FILE_SIZE (128 * 1024 * 1024)	/* compress files up to 128MB */
-doca_compress_get_max_buf_size
 /*
  * Free callback - free doca_buf allocated pointer
  *
