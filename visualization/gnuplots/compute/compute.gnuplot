@@ -24,7 +24,7 @@ set border lw 2
 set border 00
 
 # set terminal pdf size 8,4
-set terminal pdf size 4,4
+set terminal pdf size 6,4
 
 set output 'compute-int8-na.pdf'
 plot 'compute-int8.data' using 2:xtic(1) ti col lc rgb "#DEAD26" lw 2 fs pattern 3 noborder, \
@@ -32,9 +32,20 @@ plot 'compute-int8.data' using 2:xtic(1) ti col lc rgb "#DEAD26" lw 2 fs pattern
      '' u 4:xtic(1) ti col lc rgb "#617288" lw 2 fs pattern 3 noborder, \
      '' u 5:xtic(1) ti col lc rgb "#333333" lw 2 fs pattern 2 noborder
 
+set output 'compute-int32-na.pdf'
+plot 'compute-int32.data' using 2:xtic(1) ti col lc rgb "#DEAD26" lw 2 fs pattern 3 noborder, \
+     '' u 3:xtic(1) ti col lc rgb "#84A0C1" lw 2 fs pattern 3 noborder, \
+     '' u 4:xtic(1) ti col lc rgb "#617288" lw 2 fs pattern 3 noborder, \
+     '' u 5:xtic(1) ti col lc rgb "#333333" lw 2 fs pattern 2 noborder
 
 set output 'compute-int128-na.pdf'
 plot 'compute-int128.data' using 2:xtic(1) ti col lc rgb "#DEAD26" lw 2 fs pattern 3 noborder, \
+     '' u 3:xtic(1) ti col lc rgb "#84A0C1" lw 2 fs pattern 3 noborder, \
+     '' u 4:xtic(1) ti col lc rgb "#617288" lw 2 fs pattern 3 noborder, \
+     '' u 5:xtic(1) ti col lc rgb "#333333" lw 2 fs pattern 2 noborder
+
+set output 'compute-fp32-na.pdf'
+plot 'compute-fp32.data' using 2:xtic(1) ti col lc rgb "#DEAD26" lw 2 fs pattern 3 noborder, \
      '' u 3:xtic(1) ti col lc rgb "#84A0C1" lw 2 fs pattern 3 noborder, \
      '' u 4:xtic(1) ti col lc rgb "#617288" lw 2 fs pattern 3 noborder, \
      '' u 5:xtic(1) ti col lc rgb "#333333" lw 2 fs pattern 2 noborder
