@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 def install_packages():
-    # Install maven and openjdk-8-jdk
+    # Install maven and git-lfs
     try:
         subprocess.run(["sudo", "apt", "install", "-y", "maven", "git-lfs"], check=True)
         print("Maven and Git LFS successfully installed.")
@@ -42,6 +42,22 @@ def package_ycsb(ycsb_path):
         print(f"Error occurred during YCSB package build: {e}")
         sys.exit(1)
 
+def install_rocksdb_jar(jar_path):
+    # Install rocksdb jar using mvn install:install-file
+    try:
+        subprocess.run([
+            "mvn", "install:install-file", 
+            f"-Dfile={jar_path}", 
+            "-DgroupId=org.rocksdb", 
+            "-DartifactId=rocksdbjni", 
+            "-Dversion=7.0.1", 
+            "-Dpackaging=jar"
+        ], check=True)
+        print("rocksdbjni JAR installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred during rocksdbjni JAR installation: {e}")
+        sys.exit(1)
+
 def main():
     # Step 1: Install necessary packages
     install_packages()
@@ -54,6 +70,9 @@ def main():
 
     # Step 4: Build YCSB rocksdb-binding
     package_ycsb(ycsb_path)
+
+    # Step 5: Install the rocksdbjni JAR file
+    install_rocksdb_jar(jar_path)
 
 if __name__ == "__main__":
     main()
