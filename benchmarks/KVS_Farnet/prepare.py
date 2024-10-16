@@ -5,7 +5,7 @@ import sys
 def install_packages():
     # Install maven and openjdk-8-jdk
     try:
-        subprocess.run(["sudo", "apt", "install", "-y", "maven", "openjdk-8-jdk","git-lfs", "python-is-python3"], check=True)
+        subprocess.run(["sudo", "apt", "install", "-y", "maven", "openjdk-8-jdk", "python-is-python3"], check=True)
         print("Maven successfully installed.")
     except subprocess.CalledProcessError as e:
         print(f"Error occurred during installation: {e}")
@@ -34,13 +34,11 @@ def main():
     # Step 1: Install necessary packages
     install_packages()
 
-    
-
-    # Step 3: Define paths for the jar file and YCSB directory
+    # Step 2: Define paths for the jar file and YCSB directory
     ycsb_path = define_paths()
 
-    # Step 3: Install rocksdbjni JAR file using Maven
-    # Step 4: Build YCSB rocksdb-binding
+    # Step 3: Build YCSB rocksdb-binding
     package_ycsb(ycsb_path)
+    
 if __name__ == "__main__":
     main()

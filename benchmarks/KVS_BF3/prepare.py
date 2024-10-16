@@ -5,21 +5,9 @@ import sys
 def install_packages():
     # Install maven and git-lfs
     try:
-        subprocess.run(["sudo", "apt", "install", "-y", "maven", "git-lfs"], check=True)
-        print("Maven and Git LFS successfully installed.")
+        subprocess.run(["sudo", "apt", "install", "-y", "maven"], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred during installation: {e}")
-        sys.exit(1)
-
-def git_lfs_setup():
-    # Initialize Git LFS and pull LFS files
-    try:
-        subprocess.run(["git", "lfs", "install"], check=True)
-        print("Git LFS installed.")
-        subprocess.run(["git", "lfs", "pull"], check=True)
-        print("Git LFS files pulled.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred with Git LFS: {e}")
         sys.exit(1)
 
 def define_paths():
@@ -62,17 +50,16 @@ def main():
     # Step 1: Install necessary packages
     install_packages()
 
-    # Step 2: Setup Git LFS and pull large files
-    git_lfs_setup()
-
-    # Step 3: Define paths for the jar file and YCSB directory
+    # Step 2: Define paths for the jar file and YCSB directory
     jar_path, ycsb_path = define_paths()
+
+    # Step 3: Install the rocksdbjni JAR file
+    install_rocksdb_jar(jar_path)
 
     # Step 4: Build YCSB rocksdb-binding
     package_ycsb(ycsb_path)
 
-    # Step 5: Install the rocksdbjni JAR file
-    install_rocksdb_jar(jar_path)
+    
 
 if __name__ == "__main__":
     main()
