@@ -39,35 +39,39 @@ doca_dir = os.path.join(this_dir, 'doca_regex')
 build_dir = os.path.join(doca_dir, 'build')
 hs_dir = os.path.join(this_dir, 'vectorscan')
 
-def default_regex(data_size, threads):
-    # hs <n_threads> <input_file> <re>
-    output = subprocess.run(['hs', 1, os.path.join(hs_dir, 'o_comment.txt'), r"[\w\s]+special[\w\s]+requests[\w\s]*\n"], capture_output=True, text=True)
-    found = re.findall(r"duration: (.+)", output.stdout)
-    print(found[0])
-    completion_time = float(found[0])
-    throughput_mbps = float(data_size) / completion_time / 1024 / 1024
-    print(f"Throughput - default: {throughput_mbps} MB/s")
-    write_results('default', data_size, threads, throughput_mbps)
+# def default_regex(data_size, threads):
+#     # hs <n_threads> <input_file> <re>
+#     output = subprocess.run(['hs', 1, os.path.join(hs_dir, 'o_comment.txt'), r"[\w\s]+special[\w\s]+requests[\w\s]*\n"], capture_output=True, text=True)
+#     found = re.findall(r"duration: (.+)", output.stdout)
+#     print(found[0])
+#     completion_time = float(found[0])
+#     throughput_mbps = float(data_size) / completion_time / 1024 / 1024
+#     print(f"Throughput - default: {throughput_mbps} MB/s")
+#     write_results('default', data_size, threads, throughput_mbps)
 
 def simd_regex(data_size, threads):
     # hs <n_threads> <input_file> <re>
-    output = subprocess.run(['hs-simd', threads, os.path.join(hs_dir, 'o_comment.txt'), r"[\w\s]+special[\w\s]+requests[\w\s]*\n"], capture_output=True, text=True)
-    found = re.findall(r"duration: (.+)", output.stdout)
+    output = subprocess.run(['hs-simd', threads, os.path.join(hs_dir, f'{data_size}.txt'), r"[\w\s]+special[\w\s]+requests[\w\s]*\n"],
+                            capture_output=True, text=True, cwd=this_dir)
+    found = re.findall(r"duration \(ns\): (.+)", output.stdout)
     print(found[0])
     completion_time = float(found[0])
-    throughput_mbps = float(data_size) / completion_time / 1024 / 1024
-    print(f"Throughput - simd: {throughput_mbps} MB/s")
-    write_results('simd', data_size, threads, throughput_mbps)
+    time_ms = completion_time / 1000000
+    # throughput_mbps = float(data_size) / completion_time / 1024 / 1024
+    # print(f"Throughput - simd: {throughput_mbps} MB/s")
+    write_results('simd', data_size, threads, time_ms)
 
 def threading_regex(data_size, threads):
     # hs <n_threads> <input_file> <re>
-    output = subprocess.run(['hs', threads, os.path.join(hs_dir, 'o_comment.txt'), r"[\w\s]+special[\w\s]+requests[\w\s]*\n"], capture_output=True, text=True)
-    found = re.findall(r"duration: (.+)", output.stdout)
+    output = subprocess.run(['hs', threads, os.path.join(hs_dir, f'{data_size}.txt'), r"[\w\s]+special[\w\s]+requests[\w\s]*\n"],
+                            capture_output=True, text=True, cwd=this_dir)
+    found = re.findall(r"duration \(ns\): (.+)", output.stdout)
     print(found[0])
     completion_time = float(found[0])
-    throughput_mbps = float(data_size) / completion_time / 1024 / 1024
-    print(f"Throughput - threading: {throughput_mbps} MB/s")
-    write_results('threading', data_size, threads, throughput_mbps)
+    time_ms = completion_time / 1000000
+    # throughput_mbps = float(data_size) / completion_time / 1024 / 1024
+    # print(f"Throughput - threading: {throughput_mbps} MB/s")
+    write_results('threading', data_size, threads, time_ms)
 
 def doca_regex(data_size):
     rules_file = os.path.join(doca_dir, 'rxpc', 'rules.rof2.binary')
@@ -77,23 +81,24 @@ def doca_regex(data_size):
     found = re.findall(r"total = (.+)", output.stdout)
     print(found[0])
     completion_time = float(found[0])
-    throughput_mbps = float(data_size) / completion_time / 1024 / 1024
-    print(f"Throughput - doca: {throughput_mbps} MB/s")
-    write_results('doca', data_size, 0, throughput_mbps)
+    time_ms = completion_time / 1000000
+    # throughput_mbps = float(data_size) / completion_time / 1024 / 1024
+    # print(f"Throughput - doca: {throughput_mbps} MB/s")
+    write_results('doca', data_size, 0, time_ms)
 
 def main():
     parser = argparse.ArgumentParser(description='Run regex benchmark')
     parser.add_argument('--benchmark_items', help='Comma-separated list of benchmark items')
-    parser.add_argument('--data_size', type=int, default=4, help='input text data size (KB)')
-    parser.add_argument('--threads', type=int, default=-1, help='Number of threads')
+    parser.add_argument('--data_size', type=str, default='4K', help='input text data size (KB)')
+    parser.add_argument('--threads', type=int, default=1, help='Number of threads')
     args, _ = parser.parse_known_args()
 
     items = args.benchmark_items.split(',')
-    data_size = args.data_size * 1024
+    data_size = args.data_size
     for item in items:
-        if item == 'default':
-            default_regex(data_size, args.threads)
-        elif item == 'simd':
+        # if item == 'default':
+        #     default_regex(data_size, args.threads)
+        if item == 'simd':
             simd_regex(data_size, args.threads)
         elif item == 'threading':
             threading_regex(data_size, args.threads)
