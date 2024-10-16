@@ -16,7 +16,10 @@
                 "operation_type_description": "Different operation in various proportions, 0->read, 1->update, 2->insert, 3-> scan",
 
                 "data_distribution_type": ["zipfian", "uniform"],
-                "data_distribution_type_description": "Different data distribution type"
+                "data_distribution_type_description": "Different data distribution type",
+
+                "thread": [0, 1, 8],
+                "thread_description": "Number of threads"
             },
             "metrics": ["latency", "95latency", "throughput"]
         }

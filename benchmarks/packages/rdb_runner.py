@@ -60,7 +60,7 @@ class RDBRunner(Runner):
                 if threads != "0":
                     conn.execute(f"PRAGMA threads={threads};")
                 threads_setting = conn.execute("SELECT current_setting('threads')").fetchone()
-                print(threads_setting[0])
+                # print(threads_setting[0])
                 
                 start_time = time.time()
                 conn.execute(cmd)
@@ -82,7 +82,7 @@ class RDBRunner(Runner):
                 if threads != "0":
                     conn.execute(f"PRAGMA threads={threads};")
                 threads_setting = conn.execute("SELECT current_setting('threads')").fetchone()
-                print(threads_setting[0])
+                # print(threads_setting[0])
                 run_times = []
                 for i in range(4):
                     start_time = time.time()

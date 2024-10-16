@@ -17,4 +17,4 @@ if __name__ == '__main__':
     
     dir = "KVS_Farnet"
     kvs_runner = KVSRunner(args, dir)
-    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type, dir)
+    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type, dir, args.thread)

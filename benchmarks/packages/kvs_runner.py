@@ -63,7 +63,7 @@ class KVSRunner(Runner):
         
         return config_file
 
-    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type, dir):
+    def run_benchmark_test(self, operation_size, operation_type, data_distribution_type, dir, thread):
         # Step 1: Generate the workload configuration
         parent_dir = os.path.dirname(os.path.abspath(__file__))
         gp_dir = os.path.dirname(parent_dir)
@@ -84,7 +84,10 @@ class KVSRunner(Runner):
             return False
 
         # Step 3: Run the benchmark test
-        run_command = f"./bin/ycsb run rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data"
+        if thread == 0:
+            run_command = f"./bin/ycsb run rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data"
+        else:
+            run_command = f"./bin/ycsb run rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data --threads {thread}"
         logging.info(f"Running benchmark with command: {run_command}")
         
         try:
