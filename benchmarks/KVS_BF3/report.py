@@ -23,22 +23,18 @@ class ReportGenerator:
         extracted_metrics = {
             "latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
             "95latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
-            # "99latency(us)": {"READ": None, "UPDATE": None, "INSERT": None, "SCAN": None},
-            # "runtime(ms)": None,
             "throughput(ops/sec)": None,
             "operationcount": None,
             "readproportion": None,
             "updateproportion": None,
-            "insertproportion": None,
-            "scanproportion": None,
-            "requestdistribution": None
+            "insertproportion": 0,
+            "scanproportion": 0,
+            "requestdistribution": None,
+            "thread": None
         }
 
         # Use regular expressions to extract values
         for line in output_content.splitlines():
-            # Extract overall runtime and throughput
-            # if "[OVERALL], RunTime(ms)" in line:
-            #     extracted_metrics["runtime(ms)"] = int(re.search(r"\[OVERALL\], RunTime\(ms\), (\d+)", line).group(1))
             if "[OVERALL], Throughput(ops/sec)" in line:
                 extracted_metrics["throughput(ops/sec)"] = float(re.search(r"\[OVERALL\], Throughput\(ops/sec\), ([\d.]+)", line).group(1))
 
@@ -49,22 +45,20 @@ class ReportGenerator:
                     match_latency = re.search(r"AverageLatency\(us\), ([\d.]+)", line)
                     if match_latency:
                         extracted_metrics["latency(us)"][operation] = float(match_latency.group(1))
-                        
+
                     # 95th Percentile Latency
                     match_95th = re.search(r"95thPercentileLatency\(us\), ([\d.]+)", line)
                     if match_95th:
                         extracted_metrics["95latency(us)"][operation] = float(match_95th.group(1))
-                        
-                    # # 99th Percentile Latency
-                    # match_99th = re.search(r"99thPercentileLatency\(us\), ([\d.]+)", line)
-                    # if match_99th:
-                    #     extracted_metrics["99latency(us)"][operation] = float(match_99th.group(1))
 
             # Extract operation count
             if "operationcount" in line:
                 match_operation_count = re.search(r"operationcount=(\d+)", line)
                 if match_operation_count:
                     extracted_metrics["operationcount"] = int(match_operation_count.group(1))
+            
+            if "Thread Count:" in line:
+                extracted_metrics['thread'] = int(re.search(r"Thread Count: (\d+)", line).group(1))
 
             # Extract operation proportions
             match_readproportion = re.search(r"readproportion=(\d+.\d+)", line)
@@ -83,7 +77,7 @@ class ReportGenerator:
             if match_scanproportion:
                 extracted_metrics['scanproportion'] = float(match_scanproportion.group(1))
             else:
-                extracted_metrics['scanproportion'] = 0.0  # Set default to 0.0 if not found
+                extracted_metrics['scanproportion'] = 0  # Set default to 0.0 if not found
 
             # Extract request distribution
             if "requestdistribution" in line:
@@ -113,7 +107,7 @@ class ReportGenerator:
         report_file = os.path.join(self.output_dir, 'report.csv')
         with open(report_file, 'w', newline='') as csvfile:
             fieldnames = ['operationcount', 'readproportion', 'updateproportion', 
-                          'insertproportion', 'scanproportion', 'requestdistribution'] + self.metrics
+                          'insertproportion', 'scanproportion', 'requestdistribution', 'thread'] + self.metrics
             
             # Add units to latency, runtime, and throughput
             fieldnames = [name if name not in self.metrics else f"{name}(us)" if "latency" in name else f"{name}(ms)" if name == "runtime" else f"{name}(ops/sec)" for name in fieldnames]

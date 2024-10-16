@@ -87,7 +87,7 @@ class KVSRunner(Runner):
         if thread == 0:
             run_command = f"./bin/ycsb run rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data"
         else:
-            run_command = f"./bin/ycsb run rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data --threads {thread}"
+            run_command = f"./bin/ycsb run rocksdb -s -P {config_file} -p rocksdb.dir=/tmp/ycsb-rocksdb-data -threads {thread}"
         logging.info(f"Running benchmark with command: {run_command}")
         
         try:
@@ -96,9 +96,11 @@ class KVSRunner(Runner):
         except subprocess.CalledProcessError as e:
             logging.error(f"Error occurred while running benchmark: {e.stderr.decode()}")
 
+        # Step 4: Write benchmark results to the output file, including thread info
         result_file = self.get_unique_filename(self.output_dir, 'output.txt')
         with open(result_file, 'w') as f:
             f.write(f"Configuration File: {config_file}\n\n")
+            f.write(f"Thread Count: {thread}\n\n")  # Write the thread count
             with open(config_file, 'r') as config_f:
                 f.write("Configuration Content:\n")
                 f.write(config_f.read() + "\n\n")
@@ -106,4 +108,3 @@ class KVSRunner(Runner):
             logging.info(f"Benchmark results saved to {result_file}")
 
         print("Benchmark completed successfully!")
-
