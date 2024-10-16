@@ -223,12 +223,12 @@ main(int argc, char **argv)
 		doca_argp_destroy();
 		return EXIT_FAILURE;
 	}
-	if (file_size > MAX_FILE_SIZE) {
-		DOCA_LOG_ERR("Invalid file size. Should be smaller then %d", MAX_FILE_SIZE);
-		free(file_data);
-		doca_argp_destroy();
-		return EXIT_FAILURE;
-	}
+	// if (file_size > MAX_FILE_SIZE) {
+	// 	DOCA_LOG_ERR("Invalid file size. Should be smaller then %d", MAX_FILE_SIZE);
+	// 	free(file_data);
+	// 	doca_argp_destroy();
+	// 	return EXIT_FAILURE;
+	// }
 
 	result = compress_deflate(&pcie_dev, file_data, file_size, compress_cfg.mode);
 	if (result != DOCA_SUCCESS)

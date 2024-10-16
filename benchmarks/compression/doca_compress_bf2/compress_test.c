@@ -84,6 +84,9 @@ static doca_error_t
 compress_jobs_decompress_is_supported(struct doca_devinfo *devinfo)
 {
 	// printf("decompress supported: %d\n", doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB));
+	uint64_t maxbufsize;
+	doca_compress_get_max_buf_size(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB, &maxbufsize);
+	printf("decompress_deflate_get_max_buf_size = %ld\n", maxbufsize);
 	return doca_compress_job_get_supported(devinfo, DOCA_DECOMPRESS_DEFLATE_JOB);
 }
 
