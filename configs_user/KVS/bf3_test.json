@@ -18,7 +18,7 @@
                 "data_distribution_type": ["zipfian", "uniform"],
                 "data_distribution_type_description": "Different data distribution type",
 
-                "thread": [0, 1, 8],
+                "thread": [1, 8],
                 "thread_description": "Number of threads"
             },
             "metrics": ["latency", "95latency", "throughput"]
