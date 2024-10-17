@@ -8,7 +8,7 @@ if base_dir not in sys.path:
     sys.path.append(base_dir)
     
 from benchmarks.packages.kvs_parser import KVSParser
-from benchmarks.packages.kvs_runner import KVSRunner
+from benchmarks.packages.kvsc_runner import KVSRunner
 
 if __name__ == '__main__':
     parser = KVSParser()
@@ -16,5 +16,6 @@ if __name__ == '__main__':
     args.operation_type = json.loads(args.operation_type)
     
     dir = "KVS_Octeon"
+
     kvs_runner = KVSRunner(args, dir)
-    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type, dir)
+    kvs_runner.run_benchmark_test(args.operation_size,args.operation_type,args.data_distribution_type, dir, args.thread)
