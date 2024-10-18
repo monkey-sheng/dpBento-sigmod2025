@@ -1,18 +1,16 @@
 # DP-Bento
 
 A customizable and modular benchmarking framework for DPU & SmartNICs
-Uses standard Python as the driver program without any extra package dependencies (I hope, //TODO: add requirements if extra packages needed)
+Uses standard Python as the driver and automatically handles dependencies of all benchmarks.
 
 ## Development environment setup
 
-Assumption: Python version 3.9 or newer is being used.
+We recommend at least Python 3.8 or higher.
 
 
 ## Experiment Configuration Guide (Developer)
 
-<img src="https://github.com/user-attachments/assets/05cec789-5519-4c1a-8534-fdf84fb294f9" width="50%">
-
-Refer to the `/configs_user/*` directory in the example folder to customize the experiment configuration.
+Refer to the `/configs_user` directory to learn about the configuration details and to customize the experiments.
 
 ### Adding a New Configuration Directory
 
@@ -44,6 +42,8 @@ Define your own parameters and metrics based on the specific needs of your exper
     ]
 }
 ```
+The key point is that the json file needs to have this specific structure, the actual parameters can be whatever you want them to be.
+
 ## Create Benchmark `compression`
 
 Create a new directory named `compression` (ensure that the directory name matches the `benchmark_class` field in your JSON file).
@@ -84,7 +84,11 @@ When the user executes the command:
 
 This script will remove all dependencies installed during the preparation phase and delete any intermediate files generated during the benchmark.
 
-## Run Benchmark `compression`
+## Run Benchmark(s), e.g. using the `compression` configuration
 
 `python3 run_dpbento.py --config /configs_user/compression/compression_test.json`
+
+## Results
+
+All results should be automatically generated into the `output/` directory, within sub directories of the corresponding name, e.g., `output/compression/`. The results should be all in CSV format.
 
