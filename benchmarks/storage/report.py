@@ -8,7 +8,11 @@ import numpy as np
 
 iops_pattern = re.compile(r'IOPS=([\d.]+[kM]?)')
 bw_pattern = re.compile(r'BW=([\d.]+[kM]?[KM]?iB/s)')
-lat_pattern = re.compile(r'^\s*lat \((\w+)\):\s*min=[\d.]+,\s*max=[\d.]+,\s*avg=([\d.]+),\s*stdev=[\d.]+', re.MULTILINE)
+
+# Updated pattern to correctly extract clat average and its unit
+clat_avg_pattern = re.compile(r'clat \((\w+)\):.*?avg=([\d.]+)', re.MULTILINE)
+clat_percentile_pattern = re.compile(r'clat percentiles.*?\((\w+)\):', re.MULTILINE)
+percentile_value_pattern = re.compile(r'\|\s*([\d.]+)\.00th=\[\s*(\d+)\]')
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate report from benchmark test results.')
@@ -31,11 +35,29 @@ def convert_value(value):
             return float(value[:-4])
     return float(value)
 
+def convert_to_msec(value, unit):
+    """Convert latency values to milliseconds."""
+    value = float(value)
+    if unit == 'nsec':
+        return value / 1e6
+    elif unit == 'usec':
+        return value / 1e3
+    elif unit == 'msec':
+        return value
+    else:
+        logging.warning(f"Unknown unit: {unit}, treating as msec")
+        return value
+
 def extract_value(pattern, text):
     match = pattern.search(text)
     if match:
         return match.group(1)
     return None
+
+def extract_clat_percentiles(text, unit):
+    """Extract clatency percentiles and convert to msec."""
+    matches = percentile_value_pattern.findall(text)
+    return {float(match[0]): convert_to_msec(float(match[1]), unit) for match in matches}
 
 def parse_benchmark_output(filepath):
     with open(filepath, 'r') as file:
@@ -43,31 +65,32 @@ def parse_benchmark_output(filepath):
 
     runs = content.split("\nRun #")
     results = []
+    clat_percentile_results = []
 
     for run in runs[1:]:  # Skip the first split part before 'Run1'
         result = {}
 
-        # Find the section containing clat and lat information
-        clat_lat_section = re.search(r'clat.*?lat.*?clat percentiles', run, re.DOTALL)
-        if clat_lat_section:
-            lat_match = lat_pattern.search(clat_lat_section.group())
-            if lat_match:
-                unit, value = lat_match.groups()
-                if unit == 'nsec':
-                    result['avg_latency'] = float(value) / 1e6  # Convert nsec to msec
-                elif unit == 'usec':
-                    result['avg_latency'] = float(value) / 1e3  # Convert usec to msec
-                elif unit == 'msec':
-                    result['avg_latency'] = float(value)  # Already in msec
-                else:
-                    logging.warning(f"Unknown latency unit: {unit}")
-                    continue
-            else:
-                logging.warning(f"Could not find lat information in the clat-lat section")
-                continue
+        # Extract clatency average and its unit, and convert to msec immediately
+        clat_avg_match = clat_avg_pattern.search(run)
+        if clat_avg_match:
+            unit = clat_avg_match.group(1)
+            avg_clatency = float(clat_avg_match.group(2))
+            avg_clatency = convert_to_msec(avg_clatency, unit)  # Convert to msec immediately
+            result['avg_clatency'] = avg_clatency
         else:
-            logging.warning(f"Could not find clat-lat section in a run")
+            logging.warning(f"Could not find clatency average in the run")
             continue
+
+        # Extract clatency percentiles unit
+        clat_unit_match = clat_percentile_pattern.search(run)
+        if clat_unit_match:
+            clat_unit = clat_unit_match.group(1)
+            # Extract clatency percentiles and convert to msec immediately
+            clat_percentiles = extract_clat_percentiles(run, clat_unit)
+            if clat_percentiles:
+                clat_percentile_results.append(clat_percentiles)
+        else:
+            logging.warning(f"Could not find clatency percentiles in the run")
 
         iops = extract_value(iops_pattern, run)
         bw = extract_value(bw_pattern, run)
@@ -77,11 +100,19 @@ def parse_benchmark_output(filepath):
         
         results.append(result)
 
-    return results
+    # Calculate the average for each percentile (already in msec)
+    if clat_percentile_results:
+        percentiles = clat_percentile_results[0].keys()
+        avg_clat_percentiles = {percentile: np.mean([run[percentile] for run in clat_percentile_results])
+                                for percentile in percentiles}
+    else:
+        avg_clat_percentiles = {}
+
+    return results, avg_clat_percentiles
 
 def process_files(output_folder, metrics):
     results = []
-    percentiles_to_calculate = [int(metric.split()[0]) for metric in metrics if "percentile" in metric]
+    percentiles_to_calculate = [int(re.findall(r'\d+', metric)[0]) for metric in metrics if "percentile" in metric]
 
     for test_type in ['randread', 'randwrite', 'read', 'write']:
         test_type_dir = os.path.join(output_folder, test_type)
@@ -100,7 +131,7 @@ def process_files(output_folder, metrics):
 
             logging.info(f"Processing file: {filepath}")
             
-            parsed_outputs = parse_benchmark_output(filepath)
+            parsed_outputs, avg_clat_percentiles = parse_benchmark_output(filepath)
             
             if not parsed_outputs:
                 logging.warning(f"No data extracted from {filepath}")
@@ -108,11 +139,11 @@ def process_files(output_folder, metrics):
 
             iops_list = [output.get('IOPS', 0) for output in parsed_outputs]
             bw_list = [output.get('bandwidth', 0) for output in parsed_outputs]
-            latency_list = [output.get('avg_latency', 0) for output in parsed_outputs]
+            clatency_list = [output.get('avg_clatency', 0) for output in parsed_outputs]
 
             avg_iops = sum(iops_list) / len(iops_list) if iops_list else 0
             avg_bw = sum(bw_list) / len(bw_list) if bw_list else 0
-            avg_latency = sum(latency_list) / len(latency_list) if latency_list else 0
+            avg_clatency = sum(clatency_list) / len(clatency_list) if clatency_list else 0
 
             # Parse directory name for parameters
             params_match = re.match(r'(\w+)_(\d+)_(\w+)_(\w+)_(\d+)_(\d+)_(.+)', dir_name)
@@ -124,7 +155,7 @@ def process_files(output_folder, metrics):
             block_size, numProc, size, runtime, direct, iodepth, io_engine = params_match.groups()
 
             result = {
-                'test_lst': 'storage',  # Assuming 'storage' is the top-level directory
+                'test_lst': 'storage',
                 'test_type': test_type,
                 'block_sizes': block_size,
                 'numProc': numProc,
@@ -133,7 +164,7 @@ def process_files(output_folder, metrics):
                 'direct': direct,
                 'iodepth': iodepth,
                 'io_engine': io_engine,
-                'avg_latency': avg_latency,
+                'avg_clatency': avg_clatency,  # Already in msec
             }
 
             if "bandwidth" in metrics:
@@ -141,11 +172,13 @@ def process_files(output_folder, metrics):
             if "IOPS" in metrics:
                 result['IOPS'] = avg_iops
 
-            if latency_list and percentiles_to_calculate:
-                latency_distribution = np.array(latency_list)
+            # Process percentile values
+            if avg_clat_percentiles and percentiles_to_calculate:
                 for percentile in percentiles_to_calculate:
-                    percentile_value = np.percentile(latency_distribution, percentile)
-                    result[f'{percentile}th_percentile_latency'] = percentile_value
+                    if percentile in avg_clat_percentiles:
+                        result[f'{percentile}th_percentile_clatency'] = avg_clat_percentiles[percentile]
+                    else:
+                        logging.warning(f"Percentile {percentile} not found in the data")
 
             results.append(result)
             logging.info(f"Processed test: {test_type}, block size: {block_size}, io_engine: {io_engine}")
@@ -156,7 +189,7 @@ def save_to_csv(results, output_folder, metrics):
     base_fields = ['test_lst', 'test_type', 'block_sizes', 'numProc', 'size', 'runtime', 'direct', 'iodepth', 'io_engine']
     
     metric_fields_map = {
-        'avg_latency': 'avg_latency',
+        'avg_clatency': 'avg_clatency',
         'bandwidth': 'bandwidth',
         'IOPS': 'IOPS',
     }
@@ -164,8 +197,8 @@ def save_to_csv(results, output_folder, metrics):
     required_fields = base_fields[:]
     for metric in metrics:
         if "percentile" in metric:
-            percentile = metric.split()[0]
-            required_fields.append(f'{percentile}th_percentile_latency')
+            percentile = re.findall(r'\d+', metric)[0]
+            required_fields.append(f'{percentile}th_percentile_clatency')
         elif metric in metric_fields_map:
             required_fields.append(metric_fields_map[metric])
     
@@ -175,6 +208,17 @@ def save_to_csv(results, output_folder, metrics):
         writer = csv.DictWriter(f, fieldnames=required_fields)
         writer.writeheader()
         for result in results:
+            # Convert all np.float64 types to standard Python float
+            for key, value in result.items():
+                if isinstance(value, np.float64):
+                    result[key] = float(value)  # Convert to standard float type
+
+            # Ensure all latency values are properly in msec
+            if 'avg_clatency' in result:
+                result['avg_clatency'] = float(result['avg_clatency'])
+            for percentile in [key for key in result if 'percentile_clatency' in key]:
+                result[percentile] = float(result[percentile])
+
             row = {field: result.get(field, '') for field in required_fields}
             writer.writerow(row)
     
