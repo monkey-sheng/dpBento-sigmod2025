@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "dpbento"
-authors = [{name = "FarDataLab", email = "fardatalab@cs.toronto.edu"}]
+authors = [{name = "redacted", email = "redacted"}]
 readme = "README.md"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
