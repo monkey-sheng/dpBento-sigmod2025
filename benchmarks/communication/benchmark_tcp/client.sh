@@ -13,7 +13,6 @@ PASSWORD="$9"
 isBW="${10}"
 REMOTE_DIRECTORY="/tmp" # The directory on the remote host
 
-# Function to SSH into farnet1 and run a script, then exit
 ssh_into_host() {
     echo "Starting SSH into $HOST_USER@$HOST_IP..."
     sshpass -p "$PASSWORD" ssh $HOST_USER@$HOST_IP "bash -s" << EOF
@@ -33,14 +32,12 @@ sleep 5
 
 echo "Now ssh into the host"
 
-# Run SSH into farnet1 in the background
 ssh_into_host &
 
 # Give the server some time to start
 echo "Waiting for the server to start..."
 sleep 5
 
-# After the background process (SSH to farnet1) completes, continue on the DPU
 
 echo "Starting the client on the DPU..."
 cd $LOCAL_DIRECTORY
