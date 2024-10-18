@@ -1,7 +1,7 @@
 {
     "benchmarks": [
         {
-            "benchmark_class": "KVS_BF3",
+            "benchmark_class": "KVS_Octeon",
             "description": "Benchmarking for Key-Value store systems, for BF3",
 
             "benchmark_items": ["rocksdb"],
@@ -18,7 +18,7 @@
                 "data_distribution_type": ["zipfian", "uniform"],
                 "data_distribution_type_description": "Different data distribution type",
 
-                "thread": [1, 8],
+                "thread": [1, 8, 24],
                 "thread_description": "Number of threads"
             },
             "metrics": ["latency", "95latency", "throughput"]
