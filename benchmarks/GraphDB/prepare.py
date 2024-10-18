@@ -35,7 +35,7 @@ def main():
     logging.info(f"Benchmark directory: {benchmark_dir}")
 
     # Install required Python package
-    run_command(['pip', 'install', "kuzu"])  # Feels sus, but Chihan said to do this for now
+    run_command(['pip', 'install', "kuzu"])
 
     # Update and install necessary system packages
     run_command(['sudo', 'apt', 'update'])
